@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spirit Connect Projector</title>
+    <link rel="stylesheet" href="src/styles.css">
+</head>
+
+<body>
+    <main class="app-shell">
+        <section class="stage" aria-label="Generated scene preview">
+            <div id="threeStage" class="renderer-layer" aria-hidden="true"></div>
+            <div class="stage-overlay">
+                <div>
+                    <p class="eyebrow">Spirit Connect Projector</p>
+                    <h1 id="sceneTitle">Particle Swirl</h1>
+                </div>
+                <button id="pauseBtn" class="icon-action" type="button" aria-label="Pause animation">
+                    <span id="pauseIcon">||</span>
+                </button>
+            </div>
+        </section>
+
+        <aside class="control-panel" aria-label="Scene controls">
+            <div class="brand-block">
+                <p class="eyebrow">Version 0.3</p>
+                <h2>Text to 3D particle scene</h2>
+                <p>
+                    Describe a physical or visual scene. The projector turns it into an interactive 3D particle field
+                    you can disturb, rotate, and observe from different angles.
+                </p>
+            </div>
+
+            <form id="promptForm" class="prompt-form">
+                <label for="promptInput">Scene prompt</label>
+                <textarea id="promptInput" rows="5"
+                    placeholder="Example: two charged particles repel each other with blue electric field lines">a bright blue vortex of particles orbiting around a glowing center</textarea>
+                <button type="submit">Project scene</button>
+            </form>
+
+            <div class="quick-prompts" aria-label="Example prompts">
+                <button type="button" data-prompt="a 3D blue nebula of particles spiraling around a luminous center">3D nebula</button>
+                <button type="button" data-prompt="a black hole pulling stardust into a rotating accretion disk">Black hole</button>
+                <button type="button" data-prompt="a binary star system orbiting a shared center of mass">Binary stars</button>
+                <button type="button" data-prompt="a magnetic field bends charged particles through glowing field lines">Magnetic field</button>
+                <button type="button" data-prompt="a particle solar system with planets orbiting the sun">Solar system</button>
+                <button type="button" data-prompt="the Earth and Moon orbit each other in a particle field">Earth Moon</button>
+                <button type="button" data-prompt="a dense particle car speeding on a highway with a fixed car shape and bright motion trails">Speeding car</button>
+                <button type="button" data-prompt="a comet crashes into Earth with a shockwave and glowing debris">Comet impact</button>
+                <button type="button" data-prompt="two luminous energy clouds attract each other and spiral inward">Attraction</button>
+                <button type="button" data-prompt="a violet vortex pulls particles around a glowing center">Vortex</button>
+                <button type="button" data-prompt="two charged particle clouds repel each other in a glowing electric field">Field cloud</button>
+                <button type="button" data-prompt="two bodies orbiting like a miniature solar system made of particles">Orbit</button>
+                <button type="button" data-prompt="waves interfere in space as bright particle bands">Wave field</button>
+            </div>
+
+            <section class="inspector" aria-label="Generated scene configuration">
+                <div class="inspector-header">
+                    <h3>Generated scene spec</h3>
+                    <span id="sceneKind">particle_swirl</span>
+                </div>
+                <pre id="sceneSpec" tabindex="0"></pre>
+            </section>
+        </aside>
+    </main>
+
+    <script type="module" src="src/app.js"></script>
+</body>
+
+</html>

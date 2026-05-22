@@ -1,0 +1,265 @@
+:root {
+    --bg: #090a0c;
+    --panel: rgba(15, 18, 22, 0.88);
+    --panel-solid: #11151a;
+    --line: rgba(255, 255, 255, 0.14);
+    --text: #f5f7fb;
+    --muted: #a5afbd;
+    --soft: #667080;
+    --accent: #20d6b5;
+    --accent-2: #6aa9ff;
+    --warn: #ffb454;
+    --radius: 8px;
+    --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    min-height: 100%;
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+}
+
+body {
+    overflow: hidden;
+}
+
+button,
+textarea {
+    font: inherit;
+}
+
+.app-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 390px;
+    width: 100vw;
+    height: 100vh;
+}
+
+.stage {
+    position: relative;
+    min-width: 0;
+    background:
+        radial-gradient(circle at 50% 45%, rgba(32, 214, 181, 0.12), transparent 34%),
+        linear-gradient(140deg, #06070a 0%, #10141a 48%, #06070a 100%);
+}
+
+.renderer-layer {
+    position: absolute;
+    inset: 0;
+}
+
+#threeStage canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+#threeStage {
+    opacity: 1;
+    pointer-events: auto;
+    cursor: grab;
+}
+
+#threeStage.is-dragging {
+    cursor: grabbing;
+}
+
+.stage-overlay {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    right: 24px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    pointer-events: none;
+}
+
+.stage-overlay h1 {
+    margin: 4px 0 0;
+    font-size: 28px;
+    line-height: 1.05;
+    letter-spacing: 0;
+}
+
+.eyebrow {
+    margin: 0;
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.icon-action {
+    width: 42px;
+    height: 42px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: rgba(5, 6, 8, 0.58);
+    color: var(--text);
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+.control-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    min-width: 0;
+    padding: 24px;
+    border-left: 1px solid var(--line);
+    background: var(--panel);
+    backdrop-filter: blur(18px);
+    overflow-y: auto;
+}
+
+.brand-block h2 {
+    margin: 8px 0 12px;
+    font-size: 28px;
+    line-height: 1.08;
+    letter-spacing: 0;
+}
+
+.brand-block p:last-child {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.55;
+}
+
+.prompt-form {
+    display: grid;
+    gap: 10px;
+}
+
+.prompt-form label,
+.inspector h3 {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+textarea {
+    width: 100%;
+    resize: vertical;
+    min-height: 130px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    outline: none;
+    background: #080b0f;
+    color: var(--text);
+    line-height: 1.45;
+}
+
+textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(32, 214, 181, 0.16);
+}
+
+.prompt-form button,
+.quick-prompts button {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--panel-solid);
+    color: var(--text);
+    cursor: pointer;
+}
+
+.prompt-form button {
+    height: 44px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #03100d;
+    font-weight: 800;
+}
+
+.quick-prompts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.quick-prompts button {
+    min-height: 40px;
+    padding: 10px 12px;
+    color: var(--muted);
+}
+
+.quick-prompts button:hover {
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+.inspector {
+    display: grid;
+    gap: 10px;
+    min-height: 0;
+}
+
+.inspector-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.inspector h3 {
+    margin: 0;
+}
+
+#sceneKind {
+    flex: 0 0 auto;
+    padding: 4px 8px;
+    border: 1px solid rgba(32, 214, 181, 0.34);
+    border-radius: 999px;
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 11px;
+}
+
+pre {
+    min-height: 220px;
+    max-height: 38vh;
+    margin: 0;
+    padding: 14px;
+    overflow: auto;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: #07090c;
+    color: #d5dde8;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+@media (max-width: 880px) {
+    body {
+        overflow: auto;
+    }
+
+    .app-shell {
+        grid-template-columns: 1fr;
+        height: auto;
+        min-height: 100vh;
+    }
+
+    .stage {
+        height: 58vh;
+        min-height: 420px;
+    }
+
+    .control-panel {
+        border-left: 0;
+        border-top: 1px solid var(--line);
+    }
+}
