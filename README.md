@@ -1,12 +1,21 @@
-# Spirit Connect Projector
+# Spirit Connect Particle Lab
 
-Version 0.3 is a static MVP for turning natural-language scene descriptions into
-live visual scenes.
+Version 0.4 is a static MVP for turning natural-language scene descriptions,
+local formation presets, and uploaded model vertices into live Three.js particle
+scenes.
 
 ## What works now
 
+- Casberry-inspired particle lab UI with a full-stage 3D viewport and a compact
+  simulation console.
 - Prompt input that maps descriptions into a validated scene spec.
 - All prompts now route to the Three.js 3D renderer.
+- Local formation presets: nebula, black hole, vortex, magnetic field, solar
+  system, and particle text.
+- Live controls for particle count, simulation speed, and glow intensity.
+- Model upload foundation: `.obj`, `.fbx`, `.glb`, embedded `.gltf`, and `.stl`
+  geometry can be normalized and displayed as a denser 22,000+ particle point
+  cloud.
 - Generic `scene_graph` mode for object + event + effect composition.
 - Scene Graph v1 includes `objects`, `motions`, `forces`, `events`, `effects`,
   `camera`, and `world`.
@@ -35,11 +44,26 @@ live visual scenes.
   - magnetic field-line influence
   - stable particle-shape objects with speed trails and scrolling ground
 - Live JSON preview of the generated scene spec.
-- Example prompt buttons and pause/resume control.
+- Formation buttons, reset view, and pause/resume control.
+
+## Model import direction
+
+The first model-import path supports OBJ, FBX, GLB, embedded GLTF, and STL
+geometry because it can run fully in the browser without a build step. The
+intended next steps are:
+
+```text
+OBJ/FBX/GLB/STL upload -> geometry sampling -> particle point cloud -> live flow controls
+```
+
+Model data stays local in the browser and is converted into the same
+`model_points` scene graph object used by the particle renderer. Text `.gltf`
+files work best when their buffers are embedded; external buffer references may
+need a project-level asset loader later.
 
 ## Why the parser is local for now
 
-The current `parseScenePrompt()` function in `src/app.js` is a stand-in for the
+The current `parseScenePrompt()` function in `src/parser.js` is a stand-in for the
 LLM parser. The intended production path is:
 
 ```text

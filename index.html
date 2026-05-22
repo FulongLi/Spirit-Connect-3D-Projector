@@ -4,69 +4,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spirit Connect Projector</title>
+    <title>Spirit Connect Particle Lab</title>
     <link rel="stylesheet" href="src/styles.css">
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
 </head>
 
 <body>
     <main class="app-shell">
-        <section class="stage" aria-label="Generated scene preview">
+        <section class="stage" aria-label="Generated particle scene preview">
             <div id="threeStage" class="renderer-layer" aria-hidden="true"></div>
+
             <div class="stage-overlay">
-                <div>
-                    <p class="eyebrow">Spirit Connect Projector</p>
-                    <h1 id="sceneTitle">Particle Swirl</h1>
+                <div class="stage-title">
+                    <p class="eyebrow">Spirit Connect Particle Lab</p>
+                    <h1 id="sceneTitle">Particle Nebula</h1>
+                    <p id="sceneSubtitle">20,000-style flow engine foundation</p>
                 </div>
-                <button id="pauseBtn" class="icon-action" type="button" aria-label="Pause animation">
-                    <span id="pauseIcon">||</span>
-                </button>
+
+                <div class="stage-actions">
+                    <button id="resetViewBtn" class="icon-action" type="button" aria-label="Reset view">
+                        <span>R</span>
+                    </button>
+                    <button id="pauseBtn" class="icon-action" type="button" aria-label="Pause animation">
+                        <span id="pauseIcon">||</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="status-strip" aria-live="polite">
+                <span id="sceneKind">3d / particle_nebula</span>
+                <span id="particleReadout">8,000 particles</span>
+                <span>Drag to orbit</span>
+                <span>Wheel to zoom</span>
             </div>
         </section>
 
-        <aside class="control-panel" aria-label="Scene controls">
-            <div class="brand-block">
-                <p class="eyebrow">Version 0.3</p>
-                <h2>Text to 3D particle scene</h2>
+        <aside class="control-panel" aria-label="Particle scene controls">
+            <header class="brand-block">
+                <p class="eyebrow">Version 0.4</p>
+                <h2>AI Particle Simulator</h2>
                 <p>
-                    Describe a physical or visual scene. The projector turns it into an interactive 3D particle field
-                    you can disturb, rotate, and observe from different angles.
+                    Shape natural-language scenes, high-density flows, text, and uploaded 3D models into interactive
+                    Three.js particle formations.
                 </p>
-            </div>
+            </header>
 
-            <form id="promptForm" class="prompt-form">
-                <label for="promptInput">Scene prompt</label>
-                <textarea id="promptInput" rows="5"
-                    placeholder="Example: two charged particles repel each other with blue electric field lines">a bright blue vortex of particles orbiting around a glowing center</textarea>
-                <button type="submit">Project scene</button>
+            <section class="console-card">
+                <div class="section-header">
+                    <span>System Core</span>
+                    <strong id="systemStatus">SYSTEM READY</strong>
+                </div>
+
+                <div class="range-control">
+                    <label for="particleCount">Particle Count</label>
+                    <span id="particleCountValue">8000</span>
+                    <input id="particleCount" type="range" min="1200" max="30000" step="400" value="8000">
+                </div>
+
+                <div class="range-control">
+                    <label for="simSpeed">Sim Speed</label>
+                    <span id="simSpeedValue">0.90</span>
+                    <input id="simSpeed" type="range" min="0.1" max="2.4" step="0.05" value="0.9">
+                </div>
+
+                <div class="range-control">
+                    <label for="glowIntensity">Glow Intensity</label>
+                    <span id="glowIntensityValue">0.86</span>
+                    <input id="glowIntensity" type="range" min="0.2" max="1" step="0.02" value="0.86">
+                </div>
+            </section>
+
+            <section class="console-card">
+                <div class="section-header">
+                    <span>Local Formations</span>
+                    <strong>LIVE UPDATE</strong>
+                </div>
+
+                <div class="formation-grid" aria-label="Particle formation presets">
+                    <button type="button" data-formation="nebula">Nebula</button>
+                    <button type="button" data-formation="black-hole">Black Hole</button>
+                    <button type="button" data-formation="vortex">Vortex</button>
+                    <button type="button" data-formation="magnetic">Magnetic</button>
+                    <button type="button" data-formation="solar">Solar</button>
+                    <button type="button" data-formation="text">Text</button>
+                </div>
+            </section>
+
+            <form id="promptForm" class="console-card prompt-form">
+                <div class="section-header">
+                    <label for="promptInput">Creative Prompt</label>
+                    <strong>SCENE GRAPH</strong>
+                </div>
+                <textarea id="promptInput" rows="4"
+                    placeholder="Example: text &quot;SPIRIT&quot; as blue glowing particles">a bright blue vortex of particles orbiting around a glowing center</textarea>
+                <button type="submit">Project Scene</button>
             </form>
 
-            <div class="quick-prompts" aria-label="Example prompts">
-                <button type="button" data-prompt="a 3D blue nebula of particles spiraling around a luminous center">3D nebula</button>
-                <button type="button" data-prompt="a black hole pulling stardust into a rotating accretion disk">Black hole</button>
-                <button type="button" data-prompt="a binary star system orbiting a shared center of mass">Binary stars</button>
-                <button type="button" data-prompt="a magnetic field bends charged particles through glowing field lines">Magnetic field</button>
-                <button type="button" data-prompt="a particle solar system with planets orbiting the sun">Solar system</button>
-                <button type="button" data-prompt="the Earth and Moon orbit each other in a particle field">Earth Moon</button>
-                <button type="button" data-prompt="a dense particle car speeding on a highway with a fixed car shape and bright motion trails">Speeding car</button>
-                <button type="button" data-prompt="a comet crashes into Earth with a shockwave and glowing debris">Comet impact</button>
-                <button type="button" data-prompt="two luminous energy clouds attract each other and spiral inward">Attraction</button>
-                <button type="button" data-prompt="a violet vortex pulls particles around a glowing center">Vortex</button>
-                <button type="button" data-prompt="two charged particle clouds repel each other in a glowing electric field">Field cloud</button>
-                <button type="button" data-prompt="two bodies orbiting like a miniature solar system made of particles">Orbit</button>
-                <button type="button" data-prompt="waves interfere in space as bright particle bands">Wave field</button>
-            </div>
+            <section class="console-card">
+                <div class="section-header">
+                    <span>Media & 3D Imports</span>
+                    <strong>OBJ FBX GLB STL</strong>
+                </div>
 
-            <section class="inspector" aria-label="Generated scene configuration">
-                <div class="inspector-header">
-                    <h3>Generated scene spec</h3>
-                    <span id="sceneKind">particle_swirl</span>
+                <label class="file-drop" for="modelUpload">
+                    <span>Upload 3D Model</span>
+                    <small>.obj, .fbx, .glb, .gltf, and .stl files become denser 22,000+ particle point clouds</small>
+                    <input id="modelUpload" type="file" accept=".obj,.fbx,.glb,.gltf,.stl,model/obj,model/gltf-binary,model/gltf+json,model/stl,text/plain">
+                </label>
+            </section>
+
+            <section class="inspector console-card" aria-label="Generated scene configuration">
+                <div class="section-header">
+                    <span>Generated Scene Spec</span>
+                    <strong id="specStatus">VALID</strong>
                 </div>
                 <pre id="sceneSpec" tabindex="0"></pre>
             </section>
         </aside>
     </main>
 
-    <script type="module" src="src/app.js"></script>
+    <script type="module" src="src/app.js?v=0.4.2"></script>
 </body>
 
 </html>

@@ -216,15 +216,7 @@ export class ThreeRenderer {
         this.points = new THREE.Points(geometry, material);
         this.world.add(this.points);
 
-        const core = this.createParticleBall({
-            radius: 2.1 + sceneSpec.intensity * 2.4,
-            count: 420,
-            color: sceneSpec.palette[0],
-            size: 0.1,
-            opacity: 0.72,
-            seed: sceneSpec.seed + 42
-        });
-        this.world.add(core);
+        // Keep the Casberry-style flow clean: no isolated decorative center dot.
     }
 
     buildOrbitalScene(sceneSpec) {
@@ -269,7 +261,7 @@ export class ThreeRenderer {
     buildBlackHoleScene(sceneSpec) {
         const THREE = this.THREE;
         this.setCameraDistance(92);
-        const diskSpec = { ...sceneSpec, particleCount: Math.min(sceneSpec.particleCount + 1200, 5200) };
+        const diskSpec = { ...sceneSpec, particleCount: Math.min(sceneSpec.particleCount + 1200, 30000) };
         const count = diskSpec.particleCount;
         const random = seededRandom(diskSpec.seed);
         const positions = new Float32Array(count * 3);
@@ -494,6 +486,16 @@ export class ThreeRenderer {
                 });
                 return;
             }
+            case 'model_points': {
+                const model = this.createModelParticles(objectSpec, sceneSpec.seed);
+                this.world.add(model.points);
+                runtime.objects.set(objectSpec.id, {
+                    spec: objectSpec, mesh: model.points,
+                    basePosition: model.points.position.clone(),
+                    particles: model.particles, kind: 'model_points'
+                });
+                return;
+            }
             default:
                 // unknown object type — skip silently
                 return;
@@ -545,13 +547,6 @@ export class ThreeRenderer {
         }
 
         if (effectSpec.type === 'glow_core') {
-            const core = this.createParticleBall({
-                radius: effectSpec.radius || 3, count: 600,
-                color: effectSpec.color || '#45d7ff',
-                size: 0.14, opacity: 0.66, seed: sceneSpec.seed + 880
-            });
-            this.world.add(core);
-            runtime.effects[effectSpec.id] = { spec: effectSpec, mesh: core };
             return;
         }
 
@@ -738,7 +733,7 @@ export class ThreeRenderer {
 
     createGraphParticleCloud(objectSpec, seed) {
         const THREE = this.THREE;
-        const count = clamp(Number(objectSpec.particleCount) || 1000, 200, 5000);
+        const count = clamp(Number(objectSpec.particleCount) || 1000, 200, 30000);
         const radius = objectSpec.radius || 8;
         const random = seededRandom(seed + hashText(objectSpec.id || 'cloud'));
         const geometry = new THREE.BufferGeometry();
@@ -1162,6 +1157,74 @@ export class ThreeRenderer {
             new THREE.PointsMaterial({
                 size: 0.18, vertexColors: true,
                 transparent: true, opacity: 0.94,
+                depthWrite: false, blending: THREE.AdditiveBlending
+            })
+        );
+        points.position.set(...(objectSpec.position || [0, 0, 0]));
+        points.userData.isInteractiveParticleObject = true;
+        points.userData.preserveParticleShape = true;
+        return { points, particles };
+    }
+
+    createModelParticles(objectSpec, seed) {
+        const THREE = this.THREE;
+        const source = Array.isArray(objectSpec.vertices) ? objectSpec.vertices : [];
+        const count = clamp(Number(objectSpec.particleCount) || source.length || 2000, 400, 30000);
+        const random = seededRandom(seed + hashText(objectSpec.id || 'model'));
+        const positions = new Float32Array(count * 3);
+        const colors = new Float32Array(count * 3);
+        const particles = [];
+        const color = new THREE.Color(objectSpec.material?.color || '#27f5d3');
+        const accent = new THREE.Color(objectSpec.material?.accent || '#6aa9ff');
+
+        let minX = Infinity, minY = Infinity, minZ = Infinity;
+        let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+        source.forEach((vertex) => {
+            const [x, y, z] = vertex;
+            if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) return;
+            minX = Math.min(minX, x); minY = Math.min(minY, y); minZ = Math.min(minZ, z);
+            maxX = Math.max(maxX, x); maxY = Math.max(maxY, y); maxZ = Math.max(maxZ, z);
+        });
+
+        const cx = (minX + maxX) * 0.5 || 0;
+        const cy = (minY + maxY) * 0.5 || 0;
+        const cz = (minZ + maxZ) * 0.5 || 0;
+        const span = Math.max(maxX - minX, maxY - minY, maxZ - minZ, 1);
+        const scale = 34 / span;
+
+        for (let i = 0; i < count; i += 1) {
+            const vertex = source.length
+                ? source[Math.floor((i / count) * source.length) % source.length]
+                : [0, 0, 0];
+            const jitter = source.length < count ? 0.08 : 0.015;
+            const x = ((vertex[0] - cx) * scale) + (random() - 0.5) * jitter;
+            const y = ((vertex[1] - cy) * scale) + (random() - 0.5) * jitter;
+            const z = ((vertex[2] - cz) * scale) + (random() - 0.5) * jitter;
+            positions[i * 3] = x;
+            positions[i * 3 + 1] = y;
+            positions[i * 3 + 2] = z;
+
+            const mix = clamp((y + 17) / 34, 0, 1);
+            const c = color.clone().lerp(accent, mix);
+            colors[i * 3] = c.r;
+            colors[i * 3 + 1] = c.g;
+            colors[i * 3 + 2] = c.b;
+            particles.push({
+                base: new THREE.Vector3(x, y, z),
+                phase: random() * Math.PI * 2,
+                radius: Math.hypot(x, y, z)
+            });
+        }
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        geometry.setAttribute('basePosition', new THREE.BufferAttribute(positions.slice(), 3));
+        const points = new THREE.Points(
+            geometry,
+            new THREE.PointsMaterial({
+                size: 0.14, vertexColors: true,
+                transparent: true, opacity: 0.92,
                 depthWrite: false, blending: THREE.AdditiveBlending
             })
         );
@@ -1610,6 +1673,12 @@ export class ThreeRenderer {
                     entry.mesh.rotation.y = Math.sin(time * sp * 0.4) * 0.08;
                     return;
                 }
+                case 'model_flow': {
+                    const entry = runtime.objects.get(motion.target);
+                    if (!entry) return;
+                    this.updateModelFlow(entry, time, motion);
+                    return;
+                }
                 default:
                     return;
             }
@@ -1733,6 +1802,32 @@ export class ThreeRenderer {
             while (x < -length * 0.62) x += length;
             positions.setXYZ(i, x, base.getY(i), base.getZ(i));
         }
+        positions.needsUpdate = true;
+    }
+
+    updateModelFlow(entry, time, motion) {
+        const positions = entry.mesh.geometry?.attributes?.position;
+        const base = entry.mesh.geometry?.attributes?.basePosition;
+        if (!positions || !base) return;
+        const speed = motion.speed || 0.8;
+        const amplitude = motion.amplitude || 0.8;
+
+        for (let i = 0; i < positions.count; i += 1) {
+            const bx = base.getX(i);
+            const by = base.getY(i);
+            const bz = base.getZ(i);
+            const phase = entry.particles?.[i]?.phase || 0;
+            const radius = Math.max(entry.particles?.[i]?.radius || Math.hypot(bx, by, bz), 0.001);
+            const breathe = Math.sin(time * speed + phase) * amplitude;
+            const stream = Math.sin(time * speed * 1.7 + by * 0.18 + phase) * 0.18;
+            positions.setXYZ(
+                i,
+                bx + (bx / radius) * breathe + Math.cos(phase + time) * stream,
+                by + (by / radius) * breathe,
+                bz + (bz / radius) * breathe + Math.sin(phase + time) * stream
+            );
+        }
+        entry.mesh.rotation.y += speed * 0.003;
         positions.needsUpdate = true;
     }
 
