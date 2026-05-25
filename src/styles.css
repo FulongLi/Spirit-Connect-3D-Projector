@@ -1,13 +1,13 @@
 :root {
-    --bg: #050608;
-    --panel: rgba(9, 12, 16, 0.9);
-    --panel-solid: #0e1318;
-    --panel-raised: #121922;
-    --line: rgba(255, 255, 255, 0.14);
-    --line-strong: rgba(39, 245, 211, 0.38);
-    --text: #f5f7fb;
-    --muted: #a6b1c2;
-    --soft: #687485;
+    --bg: #eef1f4;
+    --panel: rgba(246, 248, 250, 0.86);
+    --panel-solid: #f8fafc;
+    --panel-raised: #eef2f6;
+    --line: rgba(26, 37, 51, 0.14);
+    --line-strong: rgba(28, 170, 190, 0.42);
+    --text: #16202d;
+    --muted: #5c6878;
+    --soft: #8793a3;
     --accent: #27f5d3;
     --accent-2: #6aa9ff;
     --accent-3: #ffcf6b;
@@ -57,9 +57,17 @@ button {
     min-width: 0;
     overflow: hidden;
     background:
-        radial-gradient(circle at 50% 42%, rgba(39, 245, 211, 0.12), transparent 32%),
-        radial-gradient(circle at 70% 64%, rgba(255, 207, 107, 0.08), transparent 28%),
-        linear-gradient(140deg, #050608 0%, #10151b 48%, #06070a 100%);
+        linear-gradient(rgba(80, 92, 108, 0.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(80, 92, 108, 0.045) 1px, transparent 1px),
+        radial-gradient(circle at 50% 46%, rgba(36, 190, 205, 0.2), transparent 30%),
+        radial-gradient(circle at 55% 76%, rgba(144, 160, 178, 0.2), transparent 34%),
+        linear-gradient(180deg, #f6f8fa 0%, #e6ebf0 54%, #d8dee6 100%);
+    background-size:
+        36px 36px,
+        36px 36px,
+        auto,
+        auto,
+        auto;
 }
 
 .renderer-layer {
@@ -90,27 +98,9 @@ button {
     right: 22px;
     display: flex;
     align-items: flex-start;
-    justify-content: space-between;
+    justify-content: flex-end;
     gap: 16px;
     pointer-events: none;
-}
-
-.stage-title {
-    max-width: min(560px, 70vw);
-}
-
-.stage-overlay h1 {
-    margin: 5px 0 0;
-    font-size: clamp(28px, 4.6vw, 64px);
-    line-height: 0.98;
-    letter-spacing: 0;
-}
-
-#sceneSubtitle {
-    max-width: 520px;
-    margin: 10px 0 0;
-    color: var(--muted);
-    line-height: 1.45;
 }
 
 .eyebrow {
@@ -136,7 +126,7 @@ button {
     height: 42px;
     border: 1px solid var(--line);
     border-radius: var(--radius);
-    background: rgba(5, 6, 8, 0.62);
+    background: rgba(255, 255, 255, 0.6);
     color: var(--text);
     cursor: pointer;
 }
@@ -144,6 +134,66 @@ button {
 .icon-action:hover {
     border-color: var(--line-strong);
     color: var(--accent);
+}
+
+.model-switcher {
+    position: absolute;
+    left: 50%;
+    bottom: 58px;
+    display: grid;
+    grid-template-columns: 38px minmax(160px, auto) 38px;
+    align-items: center;
+    gap: 8px;
+    transform: translateX(-50%);
+    pointer-events: auto;
+}
+
+.switch-button {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.72);
+    color: var(--text);
+    cursor: pointer;
+}
+
+.switch-button:hover {
+    border-color: var(--line-strong);
+    color: var(--accent);
+}
+
+.model-caption {
+    display: grid;
+    justify-items: center;
+    gap: 3px;
+    min-height: 42px;
+    padding: 8px 16px;
+    border: 1px solid rgba(26, 37, 51, 0.12);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(12px);
+}
+
+#sceneTitle {
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 900;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+#sceneSubtitle {
+    max-width: min(420px, 46vw);
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.15;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .status-strip {
@@ -160,10 +210,10 @@ button {
 .status-strip span {
     min-height: 28px;
     padding: 7px 10px;
-    border: 1px solid rgba(255, 255, 255, 0.11);
+    border: 1px solid rgba(26, 37, 51, 0.12);
     border-radius: var(--radius);
-    background: rgba(5, 7, 10, 0.58);
-    color: #d6deea;
+    background: rgba(255, 255, 255, 0.66);
+    color: #2b3746;
     font-family: var(--mono);
     font-size: 11px;
 }
@@ -175,9 +225,7 @@ button {
     min-width: 0;
     padding: 18px;
     border-left: 1px solid var(--line);
-    background:
-        linear-gradient(180deg, rgba(39, 245, 211, 0.06), transparent 30%),
-        var(--panel);
+    background: var(--panel);
     backdrop-filter: blur(18px);
     overflow-y: auto;
 }
@@ -251,13 +299,17 @@ button {
     accent-color: var(--accent);
 }
 
-.formation-grid {
+.formation-grid,
+.model-grid,
+.theme-grid {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 8px;
 }
 
 .formation-grid button,
+.model-grid button,
+.theme-grid button,
 .prompt-form button {
     min-height: 38px;
     border: 1px solid var(--line);
@@ -268,10 +320,61 @@ button {
 }
 
 .formation-grid button:hover,
-.formation-grid button.is-active {
+.formation-grid button.is-active,
+.model-grid button:hover,
+.model-grid button.is-active,
+.theme-grid button:hover,
+.theme-grid button.is-active {
     border-color: var(--line-strong);
     color: var(--text);
     background: rgba(39, 245, 211, 0.1);
+}
+
+.model-grid {
+    margin-bottom: 10px;
+}
+
+.theme-grid {
+    grid-template-columns: 1fr 1fr;
+}
+
+.theme-grid button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+}
+
+.theme-grid span {
+    width: 9px;
+    height: 9px;
+    border-radius: 99px;
+    background: var(--swatch);
+    box-shadow: 0 0 10px var(--swatch);
+}
+
+.toggle-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+}
+
+.toggle-row label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 36px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--panel-raised);
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.toggle-row input {
+    accent-color: var(--accent);
 }
 
 .prompt-form {
@@ -286,7 +389,7 @@ textarea {
     border: 1px solid var(--line);
     border-radius: var(--radius);
     outline: none;
-    background: #070a0e;
+    background: #ffffff;
     color: var(--text);
     line-height: 1.45;
 }
@@ -341,8 +444,8 @@ pre {
     overflow: auto;
     border: 1px solid var(--line);
     border-radius: var(--radius);
-    background: #06080b;
-    color: #d5dde8;
+    background: #ffffff;
+    color: #253140;
     font-family: var(--mono);
     font-size: 11px;
     line-height: 1.48;
@@ -383,12 +486,25 @@ pre {
         bottom: 14px;
     }
 
-    .formation-grid {
+    .model-switcher {
+        bottom: 58px;
+        grid-template-columns: 34px minmax(128px, 1fr) 34px;
+        width: calc(100% - 32px);
+    }
+
+    .switch-button {
+        width: 34px;
+        height: 34px;
+    }
+
+    .formation-grid,
+    .model-grid,
+    .theme-grid {
         grid-template-columns: 1fr 1fr;
     }
 
-    .stage-title {
-        max-width: 100%;
+    .toggle-row {
+        grid-template-columns: 1fr;
     }
 
     #sceneSubtitle {

@@ -293,7 +293,7 @@ export function validateSceneSpec(spec) {
         kind: VALID_KINDS.has(spec.kind) ? spec.kind : DEFAULT_SCENE.kind,
         title: String(spec.title || DEFAULT_SCENE.title).slice(0, 60),
         palette: Array.isArray(spec.palette) && spec.palette.length >= 2 ? spec.palette.slice(0, 4) : DEFAULT_SCENE.palette,
-        particleCount: clamp(Number(spec.particleCount) || DEFAULT_SCENE.particleCount, 400, 30000),
+        particleCount: clamp(Number(spec.particleCount) || DEFAULT_SCENE.particleCount, 400, 200000),
         speed: clamp(Number(spec.speed) || DEFAULT_SCENE.speed, 0.08, 2.4),
         intensity: clamp(Number(spec.intensity) || DEFAULT_SCENE.intensity, 0.1, 1),
         labels: Array.isArray(spec.labels) ? spec.labels.slice(0, 5) : [],

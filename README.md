@@ -1,8 +1,8 @@
 # Spirit Connect Particle Lab
 
-Version 0.4 is a static MVP for turning natural-language scene descriptions,
-local formation presets, and uploaded model vertices into live Three.js particle
-scenes.
+Version 0.5 is a static MVP for turning natural-language scene descriptions,
+local formation presets, uploaded 3D models, and built-in demo models into live
+Three.js hologram particle scenes.
 
 ## What works now
 
@@ -14,8 +14,20 @@ scenes.
   system, and particle text.
 - Live controls for particle count, simulation speed, and glow intensity.
 - Model upload foundation: `.obj`, `.fbx`, `.glb`, embedded `.gltf`, and `.stl`
-  geometry can be normalized and displayed as a denser 22,000+ particle point
-  cloud.
+  geometry is sampled across mesh surfaces and displayed as up to a
+  200,000-particle hologram cloud.
+- Built-in model presets: BD-1, BB-8, and a procedural Spirit Core model.
+- Hologram model stage with particle halo rings, a floor dot grid, surface-normal
+  shading, and cursor-reactive surface displacement.
+- Hologram control panel inspired by the reference demo: color presets, particle
+  size, surface flow, cursor force, brightness, rotation, rings, and grid toggles.
+- Compact stage model switcher with left/right controls for cycling through the
+  built-in hologram models without a large title overlay.
+- Light gray / white technical stage background with subtle grid texture.
+- Built-in model switching now morphs the current particle cloud into the next
+  model, with a short scatter-and-regather transition.
+- Three.js and the required OBJ/FBX/GLB/STL/surface-sampling loaders are vendored
+  under `vendor/three/` so the local page does not depend on a CDN at runtime.
 - Generic `scene_graph` mode for object + event + effect composition.
 - Scene Graph v1 includes `objects`, `motions`, `forces`, `events`, `effects`,
   `camera`, and `world`.
@@ -49,17 +61,24 @@ scenes.
 ## Model import direction
 
 The first model-import path supports OBJ, FBX, GLB, embedded GLTF, and STL
-geometry because it can run fully in the browser without a build step. The
-intended next steps are:
+geometry because it can run fully in the browser without a build step. Imported
+meshes now use Three.js `MeshSurfaceSampler` so particle density follows triangle
+surface area instead of raw vertex density. The current path is:
 
 ```text
-OBJ/FBX/GLB/STL upload -> geometry sampling -> particle point cloud -> live flow controls
+OBJ/FBX/GLB/STL upload -> surface sampling + normals -> 60k particles -> live flow controls
 ```
 
 Model data stays local in the browser and is converted into the same
 `model_points` scene graph object used by the particle renderer. Text `.gltf`
 files work best when their buffers are embedded; external buffer references may
 need a project-level asset loader later.
+
+The BD-1 and BB-8 demo GLB files in `public/models/` come from
+`cortiz2894/hologram-particles` and are included here as local prototype
+reference assets. That upstream repository currently does not include a LICENSE
+file, so treat these assets as development-only placeholders until you replace
+them with your own licensed models.
 
 ## Why the parser is local for now
 

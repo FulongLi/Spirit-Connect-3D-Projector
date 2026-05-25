@@ -9,8 +9,8 @@
     <script type="importmap">
         {
             "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+                "three": "./vendor/three/build/three.module.js",
+                "three/addons/": "./vendor/three/examples/jsm/"
             }
         }
     </script>
@@ -22,12 +22,6 @@
             <div id="threeStage" class="renderer-layer" aria-hidden="true"></div>
 
             <div class="stage-overlay">
-                <div class="stage-title">
-                    <p class="eyebrow">Spirit Connect Particle Lab</p>
-                    <h1 id="sceneTitle">Particle Nebula</h1>
-                    <p id="sceneSubtitle">20,000-style flow engine foundation</p>
-                </div>
-
                 <div class="stage-actions">
                     <button id="resetViewBtn" class="icon-action" type="button" aria-label="Reset view">
                         <span>R</span>
@@ -38,21 +32,33 @@
                 </div>
             </div>
 
+            <div class="model-switcher" aria-label="Hologram model selector">
+                <button id="prevModelBtn" class="switch-button" type="button" aria-label="Previous model">
+                    <span>&lt;</span>
+                </button>
+                <div class="model-caption">
+                    <span id="sceneTitle">BD-1 Droid</span>
+                    <small id="sceneSubtitle">Surface-sampled model particles</small>
+                </div>
+                <button id="nextModelBtn" class="switch-button" type="button" aria-label="Next model">
+                    <span>&gt;</span>
+                </button>
+            </div>
+
             <div class="status-strip" aria-live="polite">
                 <span id="sceneKind">3d / particle_nebula</span>
-                <span id="particleReadout">8,000 particles</span>
-                <span>Drag to orbit</span>
-                <span>Wheel to zoom</span>
+                <span id="particleReadout">60,000 particles</span>
+                <span>Drag orbit</span>
+                <span>Wheel zoom</span>
             </div>
         </section>
 
         <aside class="control-panel" aria-label="Particle scene controls">
             <header class="brand-block">
-                <p class="eyebrow">Version 0.4</p>
-                <h2>AI Particle Simulator</h2>
+                <p class="eyebrow">Version 0.5</p>
+                <h2>Hologram Particles</h2>
                 <p>
-                    Shape natural-language scenes, high-density flows, text, and uploaded 3D models into interactive
-                    Three.js particle formations.
+                    Surface-sampled 3D models, dense particles, and live controls for a clearer hologram display.
                 </p>
             </header>
 
@@ -64,8 +70,8 @@
 
                 <div class="range-control">
                     <label for="particleCount">Particle Count</label>
-                    <span id="particleCountValue">8000</span>
-                    <input id="particleCount" type="range" min="1200" max="30000" step="400" value="8000">
+                    <span id="particleCountValue">60000</span>
+                    <input id="particleCount" type="range" min="1000" max="200000" step="1000" value="60000">
                 </div>
 
                 <div class="range-control">
@@ -78,6 +84,50 @@
                     <label for="glowIntensity">Glow Intensity</label>
                     <span id="glowIntensityValue">0.86</span>
                     <input id="glowIntensity" type="range" min="0.2" max="1" step="0.02" value="0.86">
+                </div>
+            </section>
+
+            <section class="console-card hologram-controls">
+                <div class="section-header">
+                    <span>Hologram Controls</span>
+                    <strong>MODEL MODE</strong>
+                </div>
+
+                <div class="theme-grid" aria-label="Hologram color presets">
+                    <button type="button" data-theme="cyan" class="is-active"><span style="--swatch:#27f5d3"></span>Cyan</button>
+                    <button type="button" data-theme="light"><span style="--swatch:#f5f7fb"></span>Light</button>
+                    <button type="button" data-theme="amber"><span style="--swatch:#ffcf6b"></span>Amber</button>
+                    <button type="button" data-theme="violet"><span style="--swatch:#b48cff"></span>Violet</button>
+                </div>
+
+                <div class="range-control">
+                    <label for="particleSize">Particle Size</label>
+                    <span id="particleSizeValue">0.085</span>
+                    <input id="particleSize" type="range" min="0.045" max="0.18" step="0.005" value="0.085">
+                </div>
+
+                <div class="range-control">
+                    <label for="surfaceFlow">Surface Flow</label>
+                    <span id="surfaceFlowValue">0.28</span>
+                    <input id="surfaceFlow" type="range" min="0" max="1.4" step="0.02" value="0.28">
+                </div>
+
+                <div class="range-control">
+                    <label for="mousePush">Cursor Force</label>
+                    <span id="mousePushValue">0.75</span>
+                    <input id="mousePush" type="range" min="0" max="2.2" step="0.05" value="0.75">
+                </div>
+
+                <div class="range-control">
+                    <label for="hologramBrightness">Brightness</label>
+                    <span id="hologramBrightnessValue">1.35</span>
+                    <input id="hologramBrightness" type="range" min="0.55" max="2.1" step="0.05" value="1.35">
+                </div>
+
+                <div class="toggle-row">
+                    <label><input id="modelRotate" type="checkbox" checked> Rotate</label>
+                    <label><input id="showRings" type="checkbox" checked> Rings</label>
+                    <label><input id="showGrid" type="checkbox" checked> Grid</label>
                 </div>
             </section>
 
@@ -110,12 +160,18 @@
             <section class="console-card">
                 <div class="section-header">
                     <span>Media & 3D Imports</span>
-                    <strong>OBJ FBX GLB STL</strong>
+                    <strong>200K SURFACE</strong>
+                </div>
+
+                <div class="model-grid" aria-label="Built-in hologram models">
+                    <button type="button" data-model="bd1">BD-1</button>
+                    <button type="button" data-model="bb8">BB-8</button>
+                    <button type="button" data-model="spirit">Spirit Core</button>
                 </div>
 
                 <label class="file-drop" for="modelUpload">
                     <span>Upload 3D Model</span>
-                    <small>.obj, .fbx, .glb, .gltf, and .stl files become denser 22,000+ particle point clouds</small>
+                    <small>.obj, .fbx, .glb, .gltf, and .stl files are sampled across the surface as up to 200,000-particle holograms</small>
                     <input id="modelUpload" type="file" accept=".obj,.fbx,.glb,.gltf,.stl,model/obj,model/gltf-binary,model/gltf+json,model/stl,text/plain">
                 </label>
             </section>
@@ -130,7 +186,7 @@
         </aside>
     </main>
 
-    <script type="module" src="src/app.js?v=0.4.2"></script>
+    <script type="module" src="src/app.js?v=0.5.0"></script>
 </body>
 
 </html>
