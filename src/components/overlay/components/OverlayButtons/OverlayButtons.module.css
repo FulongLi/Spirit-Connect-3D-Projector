@@ -84,3 +84,30 @@
   letter-spacing: 0.1em;
   line-height: 1;
 }
+
+@media (max-width: 720px) {
+  .container {
+    top: 16px;
+    right: 16px;
+    bottom: auto;
+    gap: 6px;
+  }
+
+  .btn {
+    height: 34px;
+    min-width: 34px;
+  }
+
+  .presetBtn {
+    width: 34px;
+    padding: 0;
+  }
+
+  .presetLabel {
+    display: none;
+  }
+
+  .separator {
+    display: none;
+  }
+}

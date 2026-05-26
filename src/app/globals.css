@@ -29,6 +29,9 @@ body {
   background: var(--color-black);
   color: var(--color-text);
   font-family: var(--font-barlow), sans-serif;
+  overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 @keyframes grain {

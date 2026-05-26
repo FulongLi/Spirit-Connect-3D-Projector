@@ -292,6 +292,9 @@ export default function ParticlesHologram({
   const springKRef = useRef(springStiffness);
   const springDampingRef = useRef(springDamping);
   const pushStrengthRef = useRef(pushStrength);
+  const mouseRadiusRef = useRef(mouseRadius);
+  const mouseStrengthRef = useRef(mouseStrength);
+  const mouseScatterRef = useRef(mouseScatter);
   const mouseGlowDecayRef = useRef(mouseGlowDecay);
   const mouseLerpRef = useRef(mouseLerp);
   const bloomNodeRef = useRef<any>(null);
@@ -369,6 +372,9 @@ export default function ParticlesHologram({
   springKRef.current             = springStiffness;
   springDampingRef.current       = springDamping;
   pushStrengthRef.current        = pushStrength;
+  mouseRadiusRef.current         = mouseRadius;
+  mouseStrengthRef.current       = mouseStrength;
+  mouseScatterRef.current        = mouseScatter;
   mouseGlowDecayRef.current      = mouseGlowDecay;
   mouseLerpRef.current           = mouseLerp;
   camIntensityRef.current        = camIntensity;
@@ -957,7 +963,7 @@ export default function ParticlesHologram({
       };
       window.addEventListener("resize", onResize);
 
-      // ── Mouse interaction ─────────────────────────────────────────────────────
+      // ── Pointer interaction ───────────────────────────────────────────────────
       const raycaster = new Raycaster();
       const mouseNDC = new Vector2();
       const mousePlane = new Plane();
@@ -974,6 +980,9 @@ export default function ParticlesHologram({
       let glowEnergy = 0;
       let lastFrameTime = performance.now();
       let mouseMoving = false;
+      let activePointerId: number | null = null;
+      let touchScatter = 0;
+      let targetTouchScatter = 0;
       const CAM_RADIUS = camera.position.z;
       let camX = 0, camY = 0, camRoll = 0;
       let camVelX = 0, camVelY = 0, camVelRoll = 0;
@@ -982,11 +991,11 @@ export default function ParticlesHologram({
       let mouseEverMoved = false;
       const smoothstep = (p: number) => p * p * (3 - 2 * p);
 
-      const onMouseMove = (e: MouseEvent) => {
+      const updatePointerPosition = (clientX: number, clientY: number) => {
         const rect = container.getBoundingClientRect();
         mouseNDC.set(
-          ((e.clientX - rect.left) / rect.width) * 2 - 1,
-          -((e.clientY - rect.top) / rect.height) * 2 + 1,
+          ((clientX - rect.left) / rect.width) * 2 - 1,
+          -((clientY - rect.top) / rect.height) * 2 + 1,
         );
         raycaster.setFromCamera(mouseNDC, camera);
         if (raycaster.ray.intersectPlane(mousePlane, mouseHit)) {
@@ -1005,12 +1014,40 @@ export default function ParticlesHologram({
         moveTimer = 0;
       };
 
-      const onMouseLeave = () => {
-        mouseMoving = false;
+      const onPointerDown = (e: PointerEvent) => {
+        if (e.cancelable) e.preventDefault();
+        activePointerId = e.pointerId;
+        container.setPointerCapture?.(e.pointerId);
+        targetTouchScatter = e.pointerType === "touch" ? 1 : 0;
+        updatePointerPosition(e.clientX, e.clientY);
       };
 
-      container.addEventListener("mousemove", onMouseMove);
-      container.addEventListener("mouseleave", onMouseLeave);
+      const onPointerMove = (e: PointerEvent) => {
+        if (activePointerId !== null && e.pointerId !== activePointerId) return;
+        if (e.cancelable) e.preventDefault();
+        targetTouchScatter = e.pointerType === "touch" ? 1 : targetTouchScatter;
+        updatePointerPosition(e.clientX, e.clientY);
+      };
+
+      const endPointer = (e: PointerEvent) => {
+        if (activePointerId !== null && e.pointerId !== activePointerId) return;
+        mouseMoving = false;
+        targetTouchScatter = 0;
+        if (activePointerId !== null) {
+          container.releasePointerCapture?.(activePointerId);
+        }
+        activePointerId = null;
+      };
+
+      const cancelPointer = (e: PointerEvent) => {
+        endPointer(e);
+      };
+
+      container.addEventListener("pointerdown", onPointerDown, { passive: false });
+      container.addEventListener("pointermove", onPointerMove, { passive: false });
+      container.addEventListener("pointerup", endPointer);
+      container.addEventListener("pointercancel", cancelPointer);
+      container.addEventListener("pointerleave", endPointer);
 
       const animate = () => {
         if (disposed) return;
@@ -1022,6 +1059,9 @@ export default function ParticlesHologram({
 
         moveTimer += delta;
         if (moveTimer > MOVE_TIMEOUT) mouseMoving = false;
+        touchScatter +=
+          (targetTouchScatter - touchScatter) *
+          (1 - Math.exp(-(targetTouchScatter > touchScatter ? 14 : 4) * delta));
 
         // ── Transition state machine ──────────────────────────────────────────
         const tState = transitionStateRef.current;
@@ -1131,16 +1171,21 @@ export default function ParticlesHologram({
 
         if (mouseMoving) {
           const push = pushStrengthRef.current;
-          impVel.x += smoothVel.x * push * delta;
-          impVel.y += smoothVel.y * push * delta;
-          impVel.z += smoothVel.z * push * delta;
+          const touchPush = 1 + touchScatter * 1.35;
+          impVel.x += smoothVel.x * push * touchPush * delta;
+          impVel.y += smoothVel.y * push * touchPush * delta;
+          impVel.z += smoothVel.z * push * touchPush * delta;
         }
 
         impulse.x += impVel.x * delta;
         impulse.y += impVel.y * delta;
         impulse.z += impVel.z * delta;
-        impulse.clampLength(0, 3.5);
+        impulse.clampLength(0, 3.5 + touchScatter * 2.1);
 
+        u.mouseRadius.value = mouseRadiusRef.current * (1 + touchScatter * 1.55);
+        u.mouseStrength.value =
+          mouseStrengthRef.current * (1 + touchScatter * 0.55);
+        u.mouseScatter.value = mouseScatterRef.current + touchScatter * 1.25;
         u.mouseVel.value.copy(impulse);
         prevMousePos.copy(smoothMousePos);
 
@@ -1182,8 +1227,11 @@ export default function ParticlesHologram({
 
       cleanupInner = () => {
         window.removeEventListener("resize", onResize);
-        container.removeEventListener("mousemove", onMouseMove);
-        container.removeEventListener("mouseleave", onMouseLeave);
+        container.removeEventListener("pointerdown", onPointerDown);
+        container.removeEventListener("pointermove", onPointerMove);
+        container.removeEventListener("pointerup", endPointer);
+        container.removeEventListener("pointercancel", cancelPointer);
+        container.removeEventListener("pointerleave", endPointer);
         sphereGeo.dispose();
         material.dispose();
         cylGeo.dispose();
@@ -1441,5 +1489,15 @@ export default function ParticlesHologram({
     uni.w4.rotation.y = yB;
   }, [ringRadius, ringThickness, ringGap]);
 
-  return <div ref={containerRef} style={{ width: "100%", height: "100%" }} />;
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        width: "100%",
+        height: "100%",
+        touchAction: "none",
+        overscrollBehavior: "none",
+      }}
+    />
+  );
 }

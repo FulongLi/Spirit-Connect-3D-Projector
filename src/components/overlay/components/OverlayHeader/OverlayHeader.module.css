@@ -1,0 +1,123 @@
+.root {
+  position: absolute;
+  top: 24px;
+  left: 28px;
+  max-width: 310px;
+  pointer-events: none;
+  z-index: 999999999;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.hidden {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.eyebrow {
+  font-family: var(--font-ibm-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(220, 240, 255, 0.9);
+  margin-bottom: 6px;
+}
+
+.rule {
+  height: 1px;
+  background: rgba(220, 240, 255, 0.9);
+  margin-bottom: 10px;
+}
+
+.title {
+  font-family: var(--font-bebas), sans-serif;
+  font-size: 42px;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  color: rgba(220, 240, 255, 0.9);
+  margin: 0;
+}
+
+.subtitle {
+  font-family: var(--font-barlow), sans-serif;
+  font-size: 12px;
+  font-weight: 300;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(220, 240, 255, 0.9);
+  margin-top: 4px;
+}
+
+.meta {
+  font-family: var(--font-ibm-mono), monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: rgba(220, 240, 255, 0.9);
+  margin-top: 12px;
+  line-height: 1.7;
+}
+
+.copy {
+  max-width: 300px;
+  font-family: var(--font-barlow), sans-serif;
+  font-size: 13px;
+  font-weight: 300;
+  line-height: 1.45;
+  letter-spacing: 0.04em;
+  color: rgba(220, 240, 255, 0.72);
+  margin: 14px 0 0;
+}
+
+@media (max-width: 720px) {
+  .root {
+    top: 18px;
+    left: 18px;
+    right: 18px;
+    max-width: 270px;
+  }
+
+  .eyebrow {
+    font-size: 8px;
+    letter-spacing: 0.16em;
+    margin-bottom: 5px;
+  }
+
+  .rule {
+    width: 190px;
+    margin-bottom: 8px;
+  }
+
+  .title {
+    font-size: 32px;
+    letter-spacing: 0.04em;
+  }
+
+  .subtitle {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+  }
+
+  .meta {
+    font-size: 8px;
+    line-height: 1.45;
+    margin-top: 9px;
+  }
+
+  .copy {
+    max-width: 245px;
+    font-size: 11px;
+    line-height: 1.35;
+    letter-spacing: 0.025em;
+    margin-top: 10px;
+  }
+}
+
+@media (max-height: 620px) and (max-width: 720px) {
+  .copy {
+    display: none;
+  }
+}

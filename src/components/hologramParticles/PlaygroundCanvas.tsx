@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Leva } from "leva";
 import { LEVA_THEME } from "@/components/shared/theme";
 import HologramScene from "./HologramScene";
@@ -24,6 +24,7 @@ export default function PlaygroundCanvas() {
   const [replayTrigger, setReplayTrigger] = useState(0);
   const [activePreset, setActivePreset] = useState<PresetId>("light");
   const [rendererUnavailable, setRendererUnavailable] = useState(false);
+  const [isCompact, setIsCompact] = useState(false);
   const activeModel = MODELS[activeModelIndex];
   const isSphereModel = activeModel.id === "sphere";
 
@@ -31,6 +32,14 @@ export default function PlaygroundCanvas() {
     setReplayTrigger((t) => t + 1);
     setHeaderVisible(false);
   });
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 720px), (pointer: coarse)");
+    const update = () => setIsCompact(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
 
   return (
     <>
@@ -63,6 +72,11 @@ export default function PlaygroundCanvas() {
           maskContrast={isSphereModel ? 2.2 : leva.maskContrast}
           noiseAmp={isSphereModel ? 0.12 : leva.noiseAmp}
           noiseScale={isSphereModel ? 1.15 : leva.noiseScale}
+          particleCount={isCompact ? Math.min(leva.particleCount, 36000) : leva.particleCount}
+          modelY={isCompact ? -0.72 : leva.modelY}
+          mouseRadius={isCompact ? Math.max(leva.mouseRadius, 3.2) : leva.mouseRadius}
+          mouseStrength={isCompact ? Math.max(leva.mouseStrength, 5.6) : leva.mouseStrength}
+          pushStrength={isCompact ? Math.max(leva.pushStrength, 4.8) : leva.pushStrength}
         />
       </div>
 
