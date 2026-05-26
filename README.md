@@ -66,11 +66,9 @@ To publish the site:
 4. Set `Source` to `GitHub Actions`.
 5. Push to `main` or run the workflow manually.
 
-The public site URL should be:
+Public site:
 
-```text
-https://fulongli.github.io/Spirit-Connect-3D-Projector/
-```
+[https://fulongli.github.io/Spirit-Connect-3D-Projector/](https://fulongli.github.io/Spirit-Connect-3D-Projector/)
 
 ## Project Structure
 
