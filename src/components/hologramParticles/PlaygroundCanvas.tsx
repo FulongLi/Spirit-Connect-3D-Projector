@@ -7,6 +7,9 @@ import HologramScene from "./HologramScene";
 import OverlayButtons from "@/components/overlay/components/OverlayButtons/OverlayButtons";
 import ModelSelector, { ModelOption } from "@/components/overlay/components/ModelSelector/ModelSelector";
 import OverlayHeader from "@/components/overlay/components/OverlayHeader/OverlayHeader";
+import SocialMorphLinks, {
+  SocialMorphTarget,
+} from "@/components/overlay/components/SocialMorphLinks/SocialMorphLinks";
 import { assetPath } from "@/components/shared/assetPath";
 import { useHologramControls } from "./utils/useHologramControls";
 import { PRESETS, type PresetId } from "./utils/presets";
@@ -17,6 +20,12 @@ const MODELS: ModelOption[] = [
   { id: "bb8", label: "BB-8", url: assetPath("/glb/bb8.glb") },
 ];
 
+const SOCIAL_TARGETS: SocialMorphTarget[] = [
+  { id: "x", label: "X", url: "procedural:text:X" },
+  { id: "linkedin", label: "LinkedIn", url: "procedural:text:IN" },
+  { id: "contact", label: "Contact", url: "procedural:text:CONNECT" },
+];
+
 export default function PlaygroundCanvas() {
   const [hideLeva, setHideLeva] = useState(true);
   const [activeModelIndex, setActiveModelIndex] = useState(0);
@@ -25,8 +34,11 @@ export default function PlaygroundCanvas() {
   const [activePreset, setActivePreset] = useState<PresetId>("light");
   const [rendererUnavailable, setRendererUnavailable] = useState(false);
   const [isCompact, setIsCompact] = useState(false);
+  const [activeSocialTarget, setActiveSocialTarget] =
+    useState<SocialMorphTarget | null>(null);
   const activeModel = MODELS[activeModelIndex];
-  const isSphereModel = activeModel.id === "sphere";
+  const sceneUrl = activeSocialTarget?.url ?? activeModel.url;
+  const isSphereModel = !activeSocialTarget && activeModel.id === "sphere";
 
   const leva = useHologramControls(() => {
     setReplayTrigger((t) => t + 1);
@@ -54,8 +66,11 @@ export default function PlaygroundCanvas() {
       <OverlayHeader visible={headerVisible || rendererUnavailable} />
       <div style={{ position: "fixed", inset: 0 }}>
         <HologramScene
-          url={activeModel.url}
-          preloadUrls={MODELS.map((m) => m.url)}
+          url={sceneUrl}
+          preloadUrls={[
+            ...MODELS.map((m) => m.url),
+            ...SOCIAL_TARGETS.map((target) => target.url),
+          ]}
           onTransitionComplete={() => {
             setRendererUnavailable(false);
             setHeaderVisible(true);
@@ -73,7 +88,22 @@ export default function PlaygroundCanvas() {
           noiseAmp={isSphereModel ? 0.12 : leva.noiseAmp}
           noiseScale={isSphereModel ? 1.15 : leva.noiseScale}
           particleCount={isCompact ? Math.min(leva.particleCount, 36000) : leva.particleCount}
-          modelY={isCompact ? -0.72 : leva.modelY}
+          modelY={
+            activeSocialTarget
+              ? isCompact
+                ? -0.48
+                : -0.8
+              : isCompact
+                ? -0.72
+                : leva.modelY
+          }
+          maskScale={activeSocialTarget ? 0.9 : leva.maskScale}
+          transitionDeformDur={activeSocialTarget ? 0.28 : leva.transitionDeformDur}
+          transitionMorphDur={activeSocialTarget ? 0.58 : leva.transitionMorphDur}
+          transitionReformDur={activeSocialTarget ? 0.42 : leva.transitionReformDur}
+          transitionGlowScale={
+            activeSocialTarget ? 1.8 : leva.transitionGlowScale
+          }
           mouseRadius={isCompact ? Math.max(leva.mouseRadius, 2.35) : leva.mouseRadius}
           mouseStrength={isCompact ? Math.max(leva.mouseStrength, 4.4) : leva.mouseStrength}
           pushStrength={isCompact ? Math.max(leva.pushStrength, 2.8) : leva.pushStrength}
@@ -93,7 +123,16 @@ export default function PlaygroundCanvas() {
           <ModelSelector
             models={MODELS}
             activeIndex={activeModelIndex}
-            onChange={setActiveModelIndex}
+            onChange={(index) => {
+              setActiveSocialTarget(null);
+              setActiveModelIndex(index);
+            }}
+          />
+          <SocialMorphLinks
+            items={SOCIAL_TARGETS}
+            activeId={activeSocialTarget?.id ?? null}
+            onActivate={setActiveSocialTarget}
+            onDeactivate={() => setActiveSocialTarget(null)}
           />
         </>
       )}

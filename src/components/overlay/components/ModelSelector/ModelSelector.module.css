@@ -173,7 +173,7 @@
 
 @media (max-width: 720px) {
   .root {
-    bottom: 58px;
+    bottom: 82px;
     gap: 8px;
     width: min(100vw - 28px, 330px);
     justify-content: center;

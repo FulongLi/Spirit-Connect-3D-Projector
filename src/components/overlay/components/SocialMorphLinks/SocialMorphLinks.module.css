@@ -1,0 +1,76 @@
+.root {
+  position: fixed;
+  right: 28px;
+  bottom: 22px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  pointer-events: auto;
+}
+
+.item {
+  position: relative;
+  border: 0;
+  background: transparent;
+  color: rgba(245, 250, 255, 0.48);
+  cursor: pointer;
+  font-family: var(--font-ibm-mono), monospace;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  line-height: 1;
+  padding: 10px 0;
+  text-transform: uppercase;
+  transition:
+    color 0.24s ease,
+    opacity 0.24s ease,
+    transform 0.24s ease;
+  touch-action: none;
+}
+
+.item::after {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 3px;
+  height: 1px;
+  content: "";
+  background: currentColor;
+  opacity: 0;
+  transform: scaleX(0.2);
+  transform-origin: center;
+  transition:
+    opacity 0.24s ease,
+    transform 0.24s ease;
+}
+
+.item:hover,
+.item:focus-visible,
+.item.active {
+  color: rgba(245, 250, 255, 0.9);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.item:hover::after,
+.item:focus-visible::after,
+.item.active::after {
+  opacity: 0.72;
+  transform: scaleX(1);
+}
+
+@media (max-width: 720px) {
+  .root {
+    right: 18px;
+    left: 18px;
+    bottom: 42px;
+    justify-content: center;
+    gap: 16px;
+  }
+
+  .item {
+    font-size: 8px;
+    letter-spacing: 0.13em;
+    padding: 9px 0;
+  }
+}
