@@ -20,6 +20,12 @@ export class ThreeRenderer {
         this.particleData = [];
         this.graphRuntime = null;
         this.sceneSpec = null;
+        this.voiceState = {
+            mode: 'idle',
+            inputLevel: 0,
+            outputLevel: 0,
+            energy: 0
+        };
         this.pointer = {
             x: 0, y: 0,
             targetX: 0, targetY: 0,
@@ -54,13 +60,13 @@ export class ThreeRenderer {
         this.loading = import(THREE_MODULE).then((module) => {
             this.THREE = module;
             this.scene = new this.THREE.Scene();
-            this.scene.fog = new this.THREE.FogExp2(0xe8edf2, 0.011);
+            this.scene.fog = new this.THREE.FogExp2(0x10151b, 0.013);
 
             this.camera = new this.THREE.PerspectiveCamera(62, 1, 0.1, 1200);
             this.camera.position.set(0, 22, 88);
 
             this.renderer = new this.THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-            this.renderer.setClearColor(0xe8edf2, 1);
+            this.renderer.setClearColor(0x0b0f14, 1);
             this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
             this.container.replaceChildren(this.renderer.domElement);
             this.bindPointerEvents();
@@ -145,6 +151,13 @@ export class ThreeRenderer {
     setCameraDistance(distance) {
         this.cameraOrbit.targetDistance = distance;
         this.cameraOrbit.distance = distance;
+    }
+
+    setVoiceState(state = {}) {
+        this.voiceState = {
+            ...this.voiceState,
+            ...state
+        };
     }
 
     updatePointerField() {
@@ -494,7 +507,8 @@ export class ThreeRenderer {
                     basePosition: model.points.position.clone(),
                     particles: model.particles, kind: 'model_points',
                     morphStartTime: null,
-                    morphDuration: model.morphDuration || 0
+                    morphDuration: model.morphDuration || 0,
+                    morphViaAt: model.morphViaAt || 0.5
                 });
                 return;
             }
@@ -577,6 +591,29 @@ export class ThreeRenderer {
             }
             this.world.add(group);
             runtime.effects[effectSpec.id] = { spec: effectSpec, group };
+            return;
+        }
+
+        if (effectSpec.type === 'voice_stage') {
+            const group = new THREE.Group();
+            const color = effectSpec.color || '#27f5d3';
+            const accent = effectSpec.accent || '#6aa9ff';
+            const brightness = effectSpec.brightness || 1;
+            const rings = [
+                this.createParticleRing({ radius: 24, count: 860, color, size: 0.055, opacity: 0.11 * brightness, seed: sceneSpec.seed + 1470 }),
+                this.createParticleRing({ radius: 29, count: 940, color: accent, size: 0.052, opacity: 0.085 * brightness, seed: sceneSpec.seed + 1480 }),
+                this.createParticleRing({ radius: 34, count: 1020, color: '#f5f7fb', size: 0.045, opacity: 0.055 * brightness, seed: sceneSpec.seed + 1490 })
+            ];
+            rings[0].rotation.x = Math.PI / 2;
+            rings[1].rotation.y = Math.PI / 2;
+            rings[2].rotation.x = Math.PI / 2.6;
+            rings.forEach((ring, index) => {
+                ring.userData.waveIndex = index;
+                ring.userData.baseOpacity = ring.material.opacity;
+                group.add(ring);
+            });
+            this.world.add(group);
+            runtime.effects[effectSpec.id] = { spec: effectSpec, group, rings };
             return;
         }
 
@@ -763,7 +800,7 @@ export class ThreeRenderer {
 
     createGraphParticleCloud(objectSpec, seed) {
         const THREE = this.THREE;
-        const count = clamp(Number(objectSpec.particleCount) || 1000, 200, 30000);
+        const count = clamp(Number(objectSpec.particleCount) || 1000, 200, 200000);
         const radius = objectSpec.radius || 8;
         const random = seededRandom(seed + hashText(objectSpec.id || 'cloud'));
         const geometry = new THREE.BufferGeometry();
@@ -774,10 +811,13 @@ export class ThreeRenderer {
         // Structured: combine Fibonacci surface direction with cube-root radius
         // to fill the volume with low-discrepancy points.
         const directions = fibonacciSphere(count, 1);
+        const shell = objectSpec.distribution === 'shell';
 
         for (let i = 0; i < count; i += 1) {
             const [dx, dy, dz] = directions[i];
-            const r = radius * Math.cbrt((i + 0.5) / count) * (0.85 + random() * 0.18);
+            const r = shell
+                ? radius * (0.985 + (random() - 0.5) * 0.035)
+                : radius * Math.cbrt((i + 0.5) / count) * (0.85 + random() * 0.18);
             const x = dx * r;
             const y = dy * r;
             const z = dz * r;
@@ -803,8 +843,10 @@ export class ThreeRenderer {
         const points = new THREE.Points(
             geometry,
             new THREE.PointsMaterial({
-                size: 0.13, vertexColors: true,
-                transparent: true, opacity: 0.88,
+                size: objectSpec.material?.pointSize || 0.13,
+                vertexColors: true,
+                transparent: true,
+                opacity: objectSpec.material?.opacity || 0.88,
                 depthWrite: false, blending: THREE.AdditiveBlending
             })
         );
@@ -1005,7 +1047,7 @@ export class ThreeRenderer {
     createGraphParticleShape(objectSpec, seed) {
         const THREE = this.THREE;
         const preset = objectSpec.preset || 'highway';
-        const count = clamp(Number(objectSpec.particleCount) || 1200, 200, 4000);
+        const count = clamp(Number(objectSpec.particleCount) || 1200, 200, 80000);
         const random = seededRandom(seed + hashText(objectSpec.id || preset));
         const positions = new Float32Array(count * 3);
         const colors = new Float32Array(count * 3);
@@ -1033,6 +1075,71 @@ export class ThreeRenderer {
             }
         }
 
+        if (preset === 'city') {
+            const body = new THREE.Color(objectSpec.material?.color || '#45d7ff');
+            const windowColor = new THREE.Color(objectSpec.material?.window || '#f5f7fb');
+            const accent = new THREE.Color(objectSpec.material?.accent || '#6aa9ff');
+            const columns = 26;
+            const depths = 7;
+            for (let i = 0; i < count; i += 1) {
+                const column = Math.floor(random() * columns);
+                const depth = Math.floor(random() * depths);
+                const xCenter = (column / Math.max(columns - 1, 1) - 0.5) * 58;
+                const zCenter = (depth / Math.max(depths - 1, 1) - 0.5) * 18;
+                const height = 7 + ((Math.sin(column * 1.73) + 1) * 0.5) * 17 + random() * 5;
+                const width = 1.2 + random() * 1.6;
+                const x = xCenter + (random() - 0.5) * width;
+                const z = zCenter + (random() - 0.5) * (1 + random() * 1.4);
+                const y = random() * height;
+                const litWindow = random() > 0.82 && y > 2;
+                const c = litWindow ? windowColor : random() > 0.72 ? accent : body;
+                positions[i * 3] = x;
+                positions[i * 3 + 1] = y;
+                positions[i * 3 + 2] = z;
+                colors[i * 3] = c.r;
+                colors[i * 3 + 1] = c.g;
+                colors[i * 3 + 2] = c.b;
+            }
+        }
+
+        if (preset === 'ocean') {
+            const water = new THREE.Color(objectSpec.material?.color || '#45d7ff');
+            const accent = new THREE.Color(objectSpec.material?.accent || '#27f5d3');
+            const foam = new THREE.Color(objectSpec.material?.foam || '#f5f7fb');
+            for (let i = 0; i < count; i += 1) {
+                const x = (random() - 0.5) * 76;
+                const z = (random() - 0.5) * 42;
+                const wave = Math.sin(x * 0.18) * 1.4 + Math.cos(z * 0.22) * 1.1;
+                const c = wave > 1.5 ? foam : random() > 0.68 ? accent : water;
+                positions[i * 3] = x;
+                positions[i * 3 + 1] = wave + (random() - 0.5) * 0.35;
+                positions[i * 3 + 2] = z;
+                colors[i * 3] = c.r;
+                colors[i * 3 + 1] = c.g;
+                colors[i * 3 + 2] = c.b;
+            }
+        }
+
+        if (preset === 'mountain') {
+            const baseColor = new THREE.Color(objectSpec.material?.color || '#8fe7ff');
+            const accent = new THREE.Color(objectSpec.material?.accent || '#27f5d3');
+            const snow = new THREE.Color(objectSpec.material?.snow || '#f5f7fb');
+            for (let i = 0; i < count; i += 1) {
+                const x = (random() - 0.5) * 72;
+                const z = (random() - 0.5) * 34;
+                const ridge = Math.exp(-(x * x) / 520) * 22;
+                const side = Math.exp(-((x - 22) ** 2) / 260) * 12 + Math.exp(-((x + 24) ** 2) / 320) * 14;
+                const y = Math.max(0, ridge + side - Math.abs(z) * 0.48 + Math.sin(x * 0.27 + z * 0.14) * 1.8);
+                const c = y > 20 ? snow : y > 10 ? accent : baseColor;
+                positions[i * 3] = x;
+                positions[i * 3 + 1] = y + (random() - 0.5) * 0.35;
+                positions[i * 3 + 2] = z;
+                colors[i * 3] = c.r;
+                colors[i * 3 + 1] = c.g;
+                colors[i * 3 + 2] = c.b;
+            }
+        }
+
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
@@ -1040,8 +1147,10 @@ export class ThreeRenderer {
         const points = new THREE.Points(
             geometry,
             new THREE.PointsMaterial({
-                size: 0.08, vertexColors: true,
-                transparent: true, opacity: 0.56,
+                size: preset === 'highway' ? 0.08 : 0.095,
+                vertexColors: true,
+                transparent: true,
+                opacity: preset === 'highway' ? 0.56 : 0.72,
                 depthWrite: false, blending: THREE.AdditiveBlending
             })
         );
@@ -1202,10 +1311,13 @@ export class ThreeRenderer {
         const sourceNormals = Array.isArray(objectSpec.normals) ? objectSpec.normals : [];
         const morphSource = Array.isArray(objectSpec.morphFromVertices) ? objectSpec.morphFromVertices : [];
         const morphNormals = Array.isArray(objectSpec.morphFromNormals) ? objectSpec.morphFromNormals : [];
+        const morphVia = Array.isArray(objectSpec.morphViaVertices) ? objectSpec.morphViaVertices : [];
+        const morphViaNormals = Array.isArray(objectSpec.morphViaNormals) ? objectSpec.morphViaNormals : [];
         const count = clamp(Number(objectSpec.particleCount) || source.length || 2000, 400, 200000);
         const random = seededRandom(seed + hashText(objectSpec.id || 'model'));
         const positions = new Float32Array(count * 3);
         const targetPositions = new Float32Array(count * 3);
+        const viaPositions = morphVia.length ? new Float32Array(count * 3) : null;
         const colors = new Float32Array(count * 3);
         const normals = new Float32Array(count * 3);
         const particles = [];
@@ -1216,6 +1328,7 @@ export class ThreeRenderer {
 
         const targetBounds = getModelBounds(source);
         const startBounds = morphSource.length ? getModelBounds(morphSource) : targetBounds;
+        const viaBounds = morphVia.length ? getModelBounds(morphVia) : targetBounds;
 
         for (let i = 0; i < count; i += 1) {
             const vertex = source.length
@@ -1224,11 +1337,17 @@ export class ThreeRenderer {
             const startVertex = morphSource.length
                 ? morphSource[Math.floor((i / count) * morphSource.length) % morphSource.length]
                 : vertex;
+            const viaVertex = morphVia.length
+                ? morphVia[Math.floor((i / count) * morphVia.length) % morphVia.length]
+                : vertex;
             const normalSource = sourceNormals.length
                 ? sourceNormals[Math.floor((i / count) * sourceNormals.length) % sourceNormals.length]
                 : null;
             const startNormalSource = morphNormals.length
                 ? morphNormals[Math.floor((i / count) * morphNormals.length) % morphNormals.length]
+                : normalSource;
+            const viaNormalSource = morphViaNormals.length
+                ? morphViaNormals[Math.floor((i / count) * morphViaNormals.length) % morphViaNormals.length]
                 : normalSource;
             const nx = Number(normalSource?.[0]) || 0;
             const ny = Number(normalSource?.[1]) || 1;
@@ -1236,12 +1355,19 @@ export class ThreeRenderer {
             const snx = Number(startNormalSource?.[0]) || nx;
             const sny = Number(startNormalSource?.[1]) || ny;
             const snz = Number(startNormalSource?.[2]) || nz;
+            const vnx = Number(viaNormalSource?.[0]) || nx;
+            const vny = Number(viaNormalSource?.[1]) || ny;
+            const vnz = Number(viaNormalSource?.[2]) || nz;
             const jitter = objectSpec.sampled ? 0.006 : source.length < count ? 0.08 : 0.015;
             const target = normalizeModelVertex(vertex, targetBounds);
             const start = normalizeModelVertex(startVertex, startBounds);
+            const via = normalizeModelVertex(viaVertex, viaBounds);
             const x = start.x + snx * jitter * (random() - 0.5);
             const y = start.y + sny * jitter * (random() - 0.5);
             const z = start.z + snz * jitter * (random() - 0.5);
+            const vx = via.x + vnx * jitter * (random() - 0.5);
+            const vy = via.y + vny * jitter * (random() - 0.5);
+            const vz = via.z + vnz * jitter * (random() - 0.5);
             const tx = target.x + nx * jitter * (random() - 0.5);
             const ty = target.y + ny * jitter * (random() - 0.5);
             const tz = target.z + nz * jitter * (random() - 0.5);
@@ -1251,6 +1377,11 @@ export class ThreeRenderer {
             targetPositions[i * 3] = tx;
             targetPositions[i * 3 + 1] = ty;
             targetPositions[i * 3 + 2] = tz;
+            if (viaPositions) {
+                viaPositions[i * 3] = vx;
+                viaPositions[i * 3 + 1] = vy;
+                viaPositions[i * 3 + 2] = vz;
+            }
             normals[i * 3] = nx;
             normals[i * 3 + 1] = ny;
             normals[i * 3 + 2] = nz;
@@ -1280,6 +1411,7 @@ export class ThreeRenderer {
         geometry.setAttribute('normalHint', new THREE.BufferAttribute(normals, 3));
         geometry.setAttribute('basePosition', new THREE.BufferAttribute(positions.slice(), 3));
         geometry.setAttribute('targetPosition', new THREE.BufferAttribute(targetPositions, 3));
+        if (viaPositions) geometry.setAttribute('viaPosition', new THREE.BufferAttribute(viaPositions, 3));
         const points = new THREE.Points(
             geometry,
             new THREE.PointsMaterial({
@@ -1295,7 +1427,12 @@ export class ThreeRenderer {
         points.position.set(...(objectSpec.position || [0, 0, 0]));
         points.userData.isInteractiveParticleObject = true;
         points.userData.preserveParticleShape = true;
-        return { points, particles, morphDuration: Number(objectSpec.morphDuration) || 0 };
+        return {
+            points,
+            particles,
+            morphDuration: Number(objectSpec.morphDuration) || 0,
+            morphViaAt: clamp(Number(objectSpec.morphViaAt) || 0.5, 0.12, 0.88)
+        };
 
         function getModelBounds(points) {
             let minX = Infinity, minY = Infinity, minZ = Infinity;
@@ -1645,6 +1782,10 @@ export class ThreeRenderer {
                 }
                 return;
             }
+            if (effect.spec.type === 'voice_stage') {
+                this.updateVoiceStage(effect, time, paused);
+                return;
+            }
 
             const start = effect.event?.at || 0;
             const elapsed = localTime - start;
@@ -1771,6 +1912,13 @@ export class ThreeRenderer {
                     entry.mesh.rotation.y += (motion.speed || 0.5) * 0.005;
                     return;
                 }
+                case 'slow_orbit': {
+                    const entry = runtime.objects.get(motion.target);
+                    if (!entry) return;
+                    entry.mesh.rotation.y += (motion.speed || 0.4) * 0.0022;
+                    entry.mesh.rotation.x = Math.sin(time * (motion.speed || 0.4) * 0.35) * 0.035;
+                    return;
+                }
                 case 'speed_pulse': {
                     const entry = runtime.objects.get(motion.target);
                     if (!entry) return;
@@ -1801,6 +1949,12 @@ export class ThreeRenderer {
                     const entry = runtime.objects.get(motion.target);
                     if (!entry) return;
                     this.updateRoadScroll(entry, time, motion);
+                    return;
+                }
+                case 'wave_surface': {
+                    const entry = runtime.objects.get(motion.target);
+                    if (!entry) return;
+                    this.updateWaveSurface(entry, time, motion);
                     return;
                 }
                 case 'float': {
@@ -1849,6 +2003,11 @@ export class ThreeRenderer {
                 if (!entry) return;
                 this.updateVortexCloud(entry, time, force);
             }
+            if (force.type === 'breathing_sphere') {
+                const entry = runtime.objects.get(force.target);
+                if (!entry) return;
+                this.updateBreathingSphere(entry, time, force);
+            }
             if (force.type === 'magnetic') {
                 const entry = runtime.objects.get(force.target);
                 if (!entry) return;
@@ -1883,6 +2042,9 @@ export class ThreeRenderer {
         const base = entry.mesh.geometry?.attributes?.basePosition;
         if (!positions || !base) return;
         const strength = force.strength || 1;
+        const voiceEnergy = Math.max(this.voiceState.inputLevel || 0, this.voiceState.outputLevel || 0, this.voiceState.energy || 0);
+        const voiceModeScale = this.voiceState.mode === 'speaking' ? 1.65 : this.voiceState.mode === 'listening' ? 1.05 : 0.42;
+        const voicePulse = voiceEnergy * voiceModeScale;
 
         for (let i = 0; i < positions.count; i += 1) {
             const bx = base.getX(i);
@@ -1891,11 +2053,52 @@ export class ThreeRenderer {
             const radius = Math.hypot(bx, bz);
             const baseAngle = Math.atan2(bz, bx);
             const depth = radius / 30;
-            const angle = baseAngle + time * strength * (1.4 - depth * 0.65);
-            const inward = 1 - 0.22 * Math.sin(time * 0.8 + depth * 4);
-            const yWave = by + Math.sin(time * 1.5 + radius * 0.18) * 2.2;
-            positions.setXYZ(i, Math.cos(angle) * radius * inward, yWave, Math.sin(angle) * radius * inward);
+            const phase = entry.particles?.[i]?.phase || 0;
+            const voiceWave = Math.sin(time * 5.2 + phase + depth * 2.4) * voicePulse;
+            const angle = baseAngle + time * strength * (1.4 - depth * 0.65) + voiceWave * 0.12;
+            const inward = 1 - 0.22 * Math.sin(time * 0.8 + depth * 4) - voicePulse * 0.045;
+            const yWave = by
+                + Math.sin(time * 1.5 + radius * 0.18) * 2.2
+                + Math.sin(time * 4.4 + phase) * voicePulse * 3.2;
+            positions.setXYZ(
+                i,
+                Math.cos(angle) * radius * inward,
+                yWave,
+                Math.sin(angle) * radius * inward
+            );
         }
+        entry.mesh.scale.setScalar(1 + voicePulse * 0.028);
+        positions.needsUpdate = true;
+    }
+
+    updateBreathingSphere(entry, time, force) {
+        const positions = entry.mesh.geometry?.attributes?.position;
+        const base = entry.mesh.geometry?.attributes?.basePosition;
+        if (!positions || !base) return;
+        const strength = force.strength || 0.7;
+        const waveStrength = force.wave || 0.42;
+        const voiceEnergy = Math.max(this.voiceState.inputLevel || 0, this.voiceState.outputLevel || 0, this.voiceState.energy || 0);
+        const voiceModeScale = this.voiceState.mode === 'speaking' ? 2.1 : this.voiceState.mode === 'listening' ? 1.15 : 0.36;
+        const voicePulse = voiceEnergy * voiceModeScale;
+
+        for (let i = 0; i < positions.count; i += 1) {
+            const bx = base.getX(i);
+            const by = base.getY(i);
+            const bz = base.getZ(i);
+            const radius = Math.max(Math.hypot(bx, by, bz), 0.001);
+            const nx = bx / radius;
+            const ny = by / radius;
+            const nz = bz / radius;
+            const phase = entry.particles?.[i]?.phase || 0;
+            const lat = Math.atan2(by, Math.hypot(bx, bz));
+            const lon = Math.atan2(bz, bx);
+            const slowBreath = Math.sin(time * 0.78 + phase * 0.18) * strength;
+            const surfaceRipple = Math.sin(lon * 5.2 + time * 1.4) * Math.cos(lat * 4.5 - time * 0.85) * waveStrength;
+            const voiceRipple = Math.sin(lon * 8.0 + lat * 5.5 + time * 5.4 + phase) * voicePulse * 1.65;
+            const targetRadius = radius + slowBreath + surfaceRipple + voiceRipple + voicePulse * 1.25;
+            positions.setXYZ(i, nx * targetRadius, ny * targetRadius, nz * targetRadius);
+        }
+        entry.mesh.scale.setScalar(1 + voicePulse * 0.018);
         positions.needsUpdate = true;
     }
 
@@ -1949,19 +2152,68 @@ export class ThreeRenderer {
         positions.needsUpdate = true;
     }
 
+    updateWaveSurface(entry, time, motion) {
+        const positions = entry.mesh.geometry?.attributes?.position;
+        const base = entry.mesh.geometry?.attributes?.basePosition;
+        if (!positions || !base) return;
+        const speed = motion.speed || 1;
+        const amplitude = motion.amplitude || 1.6;
+        const voiceEnergy = Math.max(this.voiceState.inputLevel || 0, this.voiceState.outputLevel || 0, this.voiceState.energy || 0);
+        const voiceBoost = this.voiceState.mode === 'speaking' ? voiceEnergy * 2.2 : voiceEnergy * 0.9;
+
+        for (let i = 0; i < positions.count; i += 1) {
+            const x = base.getX(i);
+            const y = base.getY(i);
+            const z = base.getZ(i);
+            const wave = Math.sin(x * 0.2 + time * speed * 1.8)
+                + Math.cos(z * 0.24 + time * speed * 1.2)
+                + Math.sin((x + z) * 0.08 + time * speed * 2.4) * 0.45;
+            positions.setXYZ(i, x, y + wave * (amplitude * 0.42 + voiceBoost), z);
+        }
+        positions.needsUpdate = true;
+    }
+
+    updateVoiceStage(effect, time, paused) {
+        if (!effect.rings) return;
+        const energy = Math.max(this.voiceState.inputLevel || 0, this.voiceState.outputLevel || 0, this.voiceState.energy || 0);
+        const mode = this.voiceState.mode || 'idle';
+        const modeScale = mode === 'speaking' ? 1.85 : mode === 'listening' ? 1.05 : mode === 'thinking' ? 0.72 : 0.28;
+        const pulse = energy * modeScale;
+
+        effect.rings.forEach((ring, index) => {
+            const wave = Math.sin(time * (2.2 + index * 0.55) + index * 1.7);
+            const listenBreath = mode === 'listening' ? Math.sin(time * 1.35 + index) * 0.035 : 0;
+            const speakingWave = mode === 'speaking' ? Math.max(0, wave) * (0.08 + pulse * 0.1) : 0;
+            const thinkingTension = mode === 'thinking' ? Math.sin(time * 0.9 + index) * 0.018 : 0;
+            ring.scale.setScalar(1 + listenBreath + speakingWave + thinkingTension + pulse * (0.025 + index * 0.01));
+            ring.material.opacity = clamp((ring.userData.baseOpacity || 0.08) * (1 + pulse * 2.8 + Math.max(0, wave) * 0.45), 0.025, 0.34);
+            if (!paused) {
+                ring.rotation.z += (0.0016 + index * 0.0008) * (mode === 'speaking' ? 2.4 : 1);
+            }
+        });
+    }
+
     updateModelFlow(entry, time, motion) {
         const positions = entry.mesh.geometry?.attributes?.position;
         const base = entry.mesh.geometry?.attributes?.basePosition;
         const target = entry.mesh.geometry?.attributes?.targetPosition;
+        const via = entry.mesh.geometry?.attributes?.viaPosition;
         if (!positions || !base) return;
         const speed = motion.speed || 0.8;
         const amplitude = motion.amplitude || 0.8;
+        const voiceEnergy = Math.max(this.voiceState.inputLevel || 0, this.voiceState.outputLevel || 0, this.voiceState.energy || 0);
+        const voicePulse = (this.voiceState.mode === 'speaking' ? 1.5 : this.voiceState.mode === 'listening' ? 0.8 : 0.35) * voiceEnergy;
         if (entry.morphStartTime === null) entry.morphStartTime = time;
         const rawMorph = entry.morphDuration > 0
             ? clamp((time - entry.morphStartTime) / entry.morphDuration, 0, 1)
             : 1;
         const morph = rawMorph * rawMorph * (3 - 2 * rawMorph);
-        const transitionBurst = Math.sin(morph * Math.PI);
+        const split = entry.morphViaAt || 0.5;
+        const transitionBurst = via
+            ? (morph < split
+                ? Math.sin((morph / split) * Math.PI)
+                : Math.sin(((morph - split) / Math.max(1 - split, 0.001)) * Math.PI))
+            : Math.sin(morph * Math.PI);
 
         for (let i = 0; i < positions.count; i += 1) {
             const sx = base.getX(i);
@@ -1970,28 +2222,52 @@ export class ThreeRenderer {
             const tx = target ? target.getX(i) : sx;
             const ty = target ? target.getY(i) : sy;
             const tz = target ? target.getZ(i) : sz;
+            const vx = via ? via.getX(i) : tx;
+            const vy = via ? via.getY(i) : ty;
+            const vz = via ? via.getZ(i) : tz;
             const phase = entry.particles?.[i]?.phase || 0;
-            const bx = sx * (1 - morph) + tx * morph;
-            const by = sy * (1 - morph) + ty * morph;
-            const bz = sz * (1 - morph) + tz * morph;
+            let bx;
+            let by;
+            let bz;
+            if (via) {
+                if (morph < split) {
+                    const segment = morph / split;
+                    const ease = segment * segment * (3 - 2 * segment);
+                    bx = sx * (1 - ease) + vx * ease;
+                    by = sy * (1 - ease) + vy * ease;
+                    bz = sz * (1 - ease) + vz * ease;
+                } else {
+                    const segment = (morph - split) / Math.max(1 - split, 0.001);
+                    const ease = segment * segment * (3 - 2 * segment);
+                    bx = vx * (1 - ease) + tx * ease;
+                    by = vy * (1 - ease) + ty * ease;
+                    bz = vz * (1 - ease) + tz * ease;
+                }
+            } else {
+                bx = sx * (1 - morph) + tx * morph;
+                by = sy * (1 - morph) + ty * morph;
+                bz = sz * (1 - morph) + tz * morph;
+            }
             const radius = Math.max(entry.particles?.[i]?.radius || Math.hypot(bx, by, bz), 0.001);
             const normal = entry.particles?.[i]?.normal;
             const nx = normal?.x || bx / radius;
             const ny = normal?.y || by / radius;
             const nz = normal?.z || bz / radius;
-            const breathe = Math.sin(time * speed + phase) * amplitude;
+            const breathe = Math.sin(time * speed + phase) * (amplitude + voicePulse * 0.9);
             const stream = Math.sin(time * speed * 1.7 + by * 0.18 + phase) * 0.18;
             const pointer = this.pointerInfluence(bx, by) * (motion.pointerStrength || 1);
             const scatter = entry.particles?.[i]?.scatter;
             const burst = transitionBurst * (5.5 + Math.sin(phase * 3.1) * 2.2);
+            const voiceLift = voicePulse * (1.2 + Math.sin(phase + time * 4) * 0.6);
             positions.setXYZ(
                 i,
-                bx + nx * (breathe + pointer * 3.4) + (scatter?.x || 0) * burst + Math.cos(phase + time) * stream,
-                by + ny * (breathe + pointer * 2.2) + (scatter?.y || 0) * burst,
-                bz + nz * (breathe + pointer * 3.4) + (scatter?.z || 0) * burst + Math.sin(phase + time) * stream
+                bx + nx * (breathe + pointer * 3.4 + voiceLift) + (scatter?.x || 0) * burst + Math.cos(phase + time) * stream,
+                by + ny * (breathe + pointer * 2.2 + voiceLift),
+                bz + nz * (breathe + pointer * 3.4 + voiceLift) + (scatter?.z || 0) * burst + Math.sin(phase + time) * stream
             );
         }
         entry.mesh.rotation.y += (motion.rotationSpeed || 0) * 0.003 * speed;
+        entry.mesh.scale.setScalar(1 + voicePulse * 0.018);
         positions.needsUpdate = true;
     }
 

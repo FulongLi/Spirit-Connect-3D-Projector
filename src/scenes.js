@@ -464,3 +464,100 @@ export function createTextSceneGraph(seed, palette, text, { dense, bright } = {}
         seed
     };
 }
+
+export function createCitySceneGraph(seed, palette, dense = false) {
+    return {
+        version: 1,
+        duration: 16,
+        world: { environment: 'city', timeScale: 1, physicsMode: 'visual' },
+        objects: [
+            {
+                id: 'particle_city',
+                type: 'particle_shape',
+                role: 'city_silhouette',
+                preset: 'city',
+                position: [0, -8, 0],
+                particleCount: dense ? 52000 : 26000,
+                material: {
+                    color: palette[0] || '#45d7ff',
+                    window: palette[2] || '#f5f7fb',
+                    accent: palette[1] || '#6aa9ff'
+                }
+            }
+        ],
+        motions: [
+            { type: 'float', target: 'particle_city', amplitude: 0.18, speed: 0.72 }
+        ],
+        forces: [],
+        effects: [
+            { id: 'city_starfield', type: 'starfield', count: 420, color: '#f5f7fb', radius: 92 }
+        ],
+        events: [],
+        camera: { mode: 'free_orbit', distance: 64 },
+        seed
+    };
+}
+
+export function createOceanSceneGraph(seed, palette, dense = false) {
+    return {
+        version: 1,
+        duration: 16,
+        world: { environment: 'ocean', timeScale: 1, physicsMode: 'visual' },
+        objects: [
+            {
+                id: 'particle_ocean',
+                type: 'particle_shape',
+                role: 'wave_field',
+                preset: 'ocean',
+                position: [0, -6, 0],
+                particleCount: dense ? 56000 : 30000,
+                material: {
+                    color: palette[0] || '#45d7ff',
+                    accent: palette[1] || '#6aa9ff',
+                    foam: palette[2] || '#f5f7fb'
+                }
+            }
+        ],
+        motions: [
+            { type: 'wave_surface', target: 'particle_ocean', speed: 1.05, amplitude: 2.2 }
+        ],
+        forces: [],
+        effects: [],
+        events: [],
+        camera: { mode: 'free_orbit', distance: 72 },
+        seed
+    };
+}
+
+export function createMountainSceneGraph(seed, palette, dense = false) {
+    return {
+        version: 1,
+        duration: 16,
+        world: { environment: 'terrain', timeScale: 1, physicsMode: 'visual' },
+        objects: [
+            {
+                id: 'particle_mountain',
+                type: 'particle_shape',
+                role: 'terrain',
+                preset: 'mountain',
+                position: [0, -12, 0],
+                particleCount: dense ? 52000 : 28000,
+                material: {
+                    color: palette[0] || '#8fe7ff',
+                    accent: palette[1] || '#27f5d3',
+                    snow: palette[2] || '#f5f7fb'
+                }
+            }
+        ],
+        motions: [
+            { type: 'float', target: 'particle_mountain', amplitude: 0.12, speed: 0.46 }
+        ],
+        forces: [],
+        effects: [
+            { id: 'terrain_starfield', type: 'starfield', count: 360, color: '#f5f7fb', radius: 96 }
+        ],
+        events: [],
+        camera: { mode: 'free_orbit', distance: 76 },
+        seed
+    };
+}

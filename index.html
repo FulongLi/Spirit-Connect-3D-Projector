@@ -22,6 +22,13 @@
             <div id="threeStage" class="renderer-layer" aria-hidden="true"></div>
 
             <div class="stage-overlay">
+                <div class="form-state" aria-live="polite">
+                    <span class="state-dot" aria-hidden="true"></span>
+                    <div>
+                        <strong id="formStateLabel">IDLE</strong>
+                        <small id="formStateHint">Breathing origin sphere online</small>
+                    </div>
+                </div>
                 <div class="stage-actions">
                     <button id="resetViewBtn" class="icon-action" type="button" aria-label="Reset view">
                         <span>R</span>
@@ -32,13 +39,13 @@
                 </div>
             </div>
 
-            <div class="model-switcher" aria-label="Hologram model selector">
+            <div class="model-switcher" aria-label="Particle form selector">
                 <button id="prevModelBtn" class="switch-button" type="button" aria-label="Previous model">
                     <span>&lt;</span>
                 </button>
                 <div class="model-caption">
-                    <span id="sceneTitle">BD-1 Droid</span>
-                    <small id="sceneSubtitle">Surface-sampled model particles</small>
+                    <span id="sceneTitle">Chaos Core</span>
+                    <small id="sceneSubtitle">Idle particle consciousness</small>
                 </div>
                 <button id="nextModelBtn" class="switch-button" type="button" aria-label="Next model">
                     <span>&gt;</span>
@@ -47,120 +54,44 @@
 
             <div class="status-strip" aria-live="polite">
                 <span id="sceneKind">3d / particle_nebula</span>
-                <span id="particleReadout">60,000 particles</span>
-                <span>Drag orbit</span>
-                <span>Wheel zoom</span>
+                <span id="particleReadout">90,000 particles</span>
+                <span id="systemStatus">SYSTEM READY</span>
             </div>
         </section>
 
         <aside class="control-panel" aria-label="Particle scene controls">
             <header class="brand-block">
-                <p class="eyebrow">Version 0.5</p>
-                <h2>Hologram Particles</h2>
+                <p class="eyebrow">Version 0.8</p>
+                <h2>Chaos Companion</h2>
                 <p>
-                    Surface-sampled 3D models, dense particles, and live controls for a clearer hologram display.
+                    A voice-reactive particle form that begins as a chaotic core, then shifts into objects and scenes.
                 </p>
             </header>
 
-            <section class="console-card">
+            <section class="console-card voice-card">
                 <div class="section-header">
-                    <span>System Core</span>
-                    <strong id="systemStatus">SYSTEM READY</strong>
+                    <span>Voice Agent</span>
+                    <strong id="voiceStatus">OFFLINE</strong>
                 </div>
 
-                <div class="range-control">
-                    <label for="particleCount">Particle Count</label>
-                    <span id="particleCountValue">60000</span>
-                    <input id="particleCount" type="range" min="1000" max="200000" step="1000" value="60000">
+                <button id="talkBtn" class="talk-button" type="button">
+                    <span id="talkLabel">Talk</span>
+                    <small id="voiceHint">Talk to shape the particle form. Requires the local Node server.</small>
+                </button>
+
+                <div id="voiceWave" class="voice-wave" aria-hidden="true">
+                    <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
                 </div>
 
-                <div class="range-control">
-                    <label for="simSpeed">Sim Speed</label>
-                    <span id="simSpeedValue">0.90</span>
-                    <input id="simSpeed" type="range" min="0.1" max="2.4" step="0.05" value="0.9">
-                </div>
-
-                <div class="range-control">
-                    <label for="glowIntensity">Glow Intensity</label>
-                    <span id="glowIntensityValue">0.86</span>
-                    <input id="glowIntensity" type="range" min="0.2" max="1" step="0.02" value="0.86">
-                </div>
-            </section>
-
-            <section class="console-card hologram-controls">
-                <div class="section-header">
-                    <span>Hologram Controls</span>
-                    <strong>MODEL MODE</strong>
-                </div>
-
-                <div class="theme-grid" aria-label="Hologram color presets">
-                    <button type="button" data-theme="cyan" class="is-active"><span style="--swatch:#27f5d3"></span>Cyan</button>
-                    <button type="button" data-theme="light"><span style="--swatch:#f5f7fb"></span>Light</button>
-                    <button type="button" data-theme="amber"><span style="--swatch:#ffcf6b"></span>Amber</button>
-                    <button type="button" data-theme="violet"><span style="--swatch:#b48cff"></span>Violet</button>
-                </div>
-
-                <div class="range-control">
-                    <label for="particleSize">Particle Size</label>
-                    <span id="particleSizeValue">0.085</span>
-                    <input id="particleSize" type="range" min="0.045" max="0.18" step="0.005" value="0.085">
-                </div>
-
-                <div class="range-control">
-                    <label for="surfaceFlow">Surface Flow</label>
-                    <span id="surfaceFlowValue">0.28</span>
-                    <input id="surfaceFlow" type="range" min="0" max="1.4" step="0.02" value="0.28">
-                </div>
-
-                <div class="range-control">
-                    <label for="mousePush">Cursor Force</label>
-                    <span id="mousePushValue">0.75</span>
-                    <input id="mousePush" type="range" min="0" max="2.2" step="0.05" value="0.75">
-                </div>
-
-                <div class="range-control">
-                    <label for="hologramBrightness">Brightness</label>
-                    <span id="hologramBrightnessValue">1.35</span>
-                    <input id="hologramBrightness" type="range" min="0.55" max="2.1" step="0.05" value="1.35">
-                </div>
-
-                <div class="toggle-row">
-                    <label><input id="modelRotate" type="checkbox" checked> Rotate</label>
-                    <label><input id="showRings" type="checkbox" checked> Rings</label>
-                    <label><input id="showGrid" type="checkbox" checked> Grid</label>
+                <div class="voice-meter" aria-hidden="true">
+                    <span id="voiceMeterFill"></span>
                 </div>
             </section>
 
             <section class="console-card">
                 <div class="section-header">
-                    <span>Local Formations</span>
-                    <strong>LIVE UPDATE</strong>
-                </div>
-
-                <div class="formation-grid" aria-label="Particle formation presets">
-                    <button type="button" data-formation="nebula">Nebula</button>
-                    <button type="button" data-formation="black-hole">Black Hole</button>
-                    <button type="button" data-formation="vortex">Vortex</button>
-                    <button type="button" data-formation="magnetic">Magnetic</button>
-                    <button type="button" data-formation="solar">Solar</button>
-                    <button type="button" data-formation="text">Text</button>
-                </div>
-            </section>
-
-            <form id="promptForm" class="console-card prompt-form">
-                <div class="section-header">
-                    <label for="promptInput">Creative Prompt</label>
-                    <strong>SCENE GRAPH</strong>
-                </div>
-                <textarea id="promptInput" rows="4"
-                    placeholder="Example: text &quot;SPIRIT&quot; as blue glowing particles">a bright blue vortex of particles orbiting around a glowing center</textarea>
-                <button type="submit">Project Scene</button>
-            </form>
-
-            <section class="console-card">
-                <div class="section-header">
-                    <span>Media & 3D Imports</span>
-                    <strong>200K SURFACE</strong>
+                    <span>Form Sources</span>
+                    <strong>AUTO DENSITY</strong>
                 </div>
 
                 <div class="model-grid" aria-label="Built-in hologram models">
@@ -171,22 +102,14 @@
 
                 <label class="file-drop" for="modelUpload">
                     <span>Upload 3D Model</span>
-                    <small>.obj, .fbx, .glb, .gltf, and .stl files are sampled across the surface as up to 200,000-particle holograms</small>
+                    <small>.obj, .fbx, .glb, .gltf, and .stl files are automatically sampled at an optimized particle density</small>
                     <input id="modelUpload" type="file" accept=".obj,.fbx,.glb,.gltf,.stl,model/obj,model/gltf-binary,model/gltf+json,model/stl,text/plain">
                 </label>
-            </section>
-
-            <section class="inspector console-card" aria-label="Generated scene configuration">
-                <div class="section-header">
-                    <span>Generated Scene Spec</span>
-                    <strong id="specStatus">VALID</strong>
-                </div>
-                <pre id="sceneSpec" tabindex="0"></pre>
             </section>
         </aside>
     </main>
 
-    <script type="module" src="src/app.js?v=0.5.0"></script>
+    <script type="module" src="src/app.js?v=0.8.0"></script>
 </body>
 
 </html>

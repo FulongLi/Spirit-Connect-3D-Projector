@@ -14,7 +14,10 @@ import {
     createSpeedingCarSceneGraph,
     createAttractionSceneGraph,
     createVortexSceneGraph,
-    createTextSceneGraph
+    createTextSceneGraph,
+    createCitySceneGraph,
+    createOceanSceneGraph,
+    createMountainSceneGraph
 } from './scenes.js';
 
 export const DEFAULT_SCENE = {
@@ -65,6 +68,9 @@ export function parseScenePrompt(prompt) {
     const wantsSolar = /(solar system|planets orbiting|sun and planets|太阳系|行星|绕太阳)/.test(text);
     const wantsEarthMoon = /(earth and moon|earth moon|moon orbit|地月|月球|地球和月球)/.test(text);
     const wantsVehicle = /(car|automobile|vehicle|sports car|highway|freeway|road|speeding|racing|汽车|轿车|跑车|车辆|高速|公路|疾驰|飞驰)/.test(text);
+    const wantsCity = /(city|skyline|skyscraper|buildings|urban|城市|都市|楼群|高楼|天际线)/.test(text);
+    const wantsOcean = /(ocean|sea|wave|waves|water|海洋|大海|海浪|水面|波浪)/.test(text);
+    const wantsMountain = /(mountain|terrain|valley|forest|山|山脉|地形|峡谷|森林)/.test(text);
 
     // --- palette + intensity hints ------------------------------------------
     const bright = /(bright|glow|neon|luminous|发光|明亮)/.test(text);
@@ -232,6 +238,57 @@ export function parseScenePrompt(prompt) {
             seed,
             controls: { trail: true, glow: true, autoRotate: false },
             sceneGraph: createSpeedingCarSceneGraph(seed, carPalette, dense)
+        });
+    }
+
+    if (wantsCity) {
+        const cityPalette = cool ? palette : ['#45d7ff', '#6aa9ff', '#f5f7fb', '#27f5d3'];
+        return validateSceneSpec({
+            renderer: '3d',
+            kind: 'scene_graph',
+            title: 'Particle City',
+            palette: cityPalette,
+            particleCount: dense ? 62000 : 36000,
+            speed: slow ? 0.42 : 0.72,
+            intensity: bright ? 0.98 : 0.86,
+            labels: ['skyline', 'window particles', 'urban silhouette'],
+            seed,
+            controls: { trail: true, glow: true, autoRotate: false },
+            sceneGraph: createCitySceneGraph(seed, cityPalette, dense)
+        });
+    }
+
+    if (wantsOcean) {
+        const oceanPalette = cool ? palette : ['#45d7ff', '#27f5d3', '#f5f7fb', '#6aa9ff'];
+        return validateSceneSpec({
+            renderer: '3d',
+            kind: 'scene_graph',
+            title: 'Particle Ocean',
+            palette: oceanPalette,
+            particleCount: dense ? 62000 : 38000,
+            speed: slow ? 0.45 : 0.92,
+            intensity: bright ? 0.96 : 0.84,
+            labels: ['wave surface', 'foam particles', 'fluid motion'],
+            seed,
+            controls: { trail: true, glow: true, autoRotate: false },
+            sceneGraph: createOceanSceneGraph(seed, oceanPalette, dense)
+        });
+    }
+
+    if (wantsMountain) {
+        const mountainPalette = cool ? palette : ['#8fe7ff', '#27f5d3', '#f5f7fb', '#6aa9ff'];
+        return validateSceneSpec({
+            renderer: '3d',
+            kind: 'scene_graph',
+            title: 'Particle Terrain',
+            palette: mountainPalette,
+            particleCount: dense ? 62000 : 36000,
+            speed: slow ? 0.36 : 0.62,
+            intensity: bright ? 0.94 : 0.8,
+            labels: ['mountain ridge', 'terrain field', 'atmospheric particles'],
+            seed,
+            controls: { trail: true, glow: true, autoRotate: false },
+            sceneGraph: createMountainSceneGraph(seed, mountainPalette, dense)
         });
     }
 
