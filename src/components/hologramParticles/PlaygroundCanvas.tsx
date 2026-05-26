@@ -23,6 +23,7 @@ export default function PlaygroundCanvas() {
   const [headerVisible, setHeaderVisible] = useState(false);
   const [replayTrigger, setReplayTrigger] = useState(0);
   const [activePreset, setActivePreset] = useState<PresetId>("light");
+  const [rendererUnavailable, setRendererUnavailable] = useState(false);
   const activeModel = MODELS[activeModelIndex];
   const isSphereModel = activeModel.id === "sphere";
 
@@ -41,12 +42,19 @@ export default function PlaygroundCanvas() {
         oneLineLabels={false}
         hidden={hideLeva}
       />
-      <OverlayHeader visible={headerVisible} />
+      <OverlayHeader visible={headerVisible || rendererUnavailable} />
       <div style={{ position: "fixed", inset: 0 }}>
         <HologramScene
           url={activeModel.url}
           preloadUrls={MODELS.map((m) => m.url)}
-          onTransitionComplete={() => setHeaderVisible(true)}
+          onTransitionComplete={() => {
+            setRendererUnavailable(false);
+            setHeaderVisible(true);
+          }}
+          onUnavailable={() => {
+            setRendererUnavailable(true);
+            setHeaderVisible(true);
+          }}
           replayTrigger={replayTrigger}
           {...leva}
           {...PRESETS[activePreset]}
@@ -58,19 +66,23 @@ export default function PlaygroundCanvas() {
         />
       </div>
 
-      <OverlayButtons
-        hideLeva={hideLeva}
-        onToggleLeva={() => setHideLeva((v) => !v)}
-        activePreset={activePreset}
-        onTogglePreset={() =>
-          setActivePreset((p) => (p === "light" ? "dark" : "light"))
-        }
-      />
-      <ModelSelector
-        models={MODELS}
-        activeIndex={activeModelIndex}
-        onChange={setActiveModelIndex}
-      />
+      {!rendererUnavailable && (
+        <>
+          <OverlayButtons
+            hideLeva={hideLeva}
+            onToggleLeva={() => setHideLeva((v) => !v)}
+            activePreset={activePreset}
+            onTogglePreset={() =>
+              setActivePreset((p) => (p === "light" ? "dark" : "light"))
+            }
+          />
+          <ModelSelector
+            models={MODELS}
+            activeIndex={activeModelIndex}
+            onChange={setActiveModelIndex}
+          />
+        </>
+      )}
     </>
   );
 }

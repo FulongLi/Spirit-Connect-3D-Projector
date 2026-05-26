@@ -42,6 +42,7 @@ export interface ParticlesHologramProps {
   url: string;
   onLoaded?: () => void;
   onTransitionComplete?: () => void;
+  onUnavailable?: () => void;
   particleCount?: number;
   autoRotateSpeed?: number;
   color?: string;

@@ -191,6 +191,7 @@ export default function ParticlesHologram({
   url,
   onLoaded,
   onTransitionComplete,
+  onUnavailable,
   particleCount = 50_000,
   autoRotateSpeed = 0.8,
   color = "#8aa0b8",
@@ -1211,7 +1212,10 @@ export default function ParticlesHologram({
         bgCtxRef.current = null;
         bgTexRef.current = null;
       };
-    })();
+    })().catch((error) => {
+      console.error("Unable to initialize WebGPU renderer", error);
+      if (!disposed) onUnavailable?.();
+    });
 
     return () => {
       disposed = true;
