@@ -72,7 +72,6 @@ import { assetPath } from "@/components/shared/assetPath";
 const geometryCache = new Map<string, GeometryData>();
 const geometryInflight = new Map<string, Promise<GeometryData>>();
 const PROCEDURAL_SPHERE_URL = "procedural:sphere";
-const PROCEDURAL_TEXT_PREFIX = "procedural:text:";
 
 function cacheKey(url: string, particleCount: number) {
   return `${url}:${particleCount}`;
@@ -84,15 +83,6 @@ async function sampleGLBGeometry(
 ): Promise<GeometryData> {
   if (url === PROCEDURAL_SPHERE_URL) {
     return createBreathingSphereGeometry(particleCount);
-  }
-
-  if (url.startsWith(PROCEDURAL_TEXT_PREFIX)) {
-    const key = cacheKey(url, particleCount);
-    if (geometryCache.has(key)) return geometryCache.get(key)!;
-    const label = decodeURIComponent(url.slice(PROCEDURAL_TEXT_PREFIX.length));
-    const data = createTextTargetGeometry(label, particleCount);
-    geometryCache.set(key, data);
-    return data;
   }
 
   const key = cacheKey(url, particleCount);
@@ -188,68 +178,6 @@ function createBreathingSphereGeometry(particleCount: number): GeometryData {
     normals[base] = nx;
     normals[base + 1] = y;
     normals[base + 2] = nz;
-  }
-
-  return { positions, normals };
-}
-
-function createTextTargetGeometry(label: string, particleCount: number): GeometryData {
-  const canvas = document.createElement("canvas");
-  const width = 720;
-  const height = 280;
-  canvas.width = width;
-  canvas.height = height;
-
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  if (!ctx) return createBreathingSphereGeometry(particleCount);
-
-  ctx.clearRect(0, 0, width, height);
-  ctx.fillStyle = "#ffffff";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-
-  const compactLabel = label.trim().toUpperCase();
-  const fontSize =
-    compactLabel.length <= 2 ? 210 : compactLabel.length <= 5 ? 150 : 118;
-  ctx.font = `800 ${fontSize}px Arial, Helvetica, sans-serif`;
-  ctx.fillText(compactLabel, width / 2, height / 2 + fontSize * 0.03);
-
-  const { data } = ctx.getImageData(0, 0, width, height);
-  const pixels: Array<[number, number, number]> = [];
-  const step = compactLabel.length <= 2 ? 3 : 2;
-
-  for (let y = 0; y < height; y += step) {
-    for (let x = 0; x < width; x += step) {
-      const alpha = data[(y * width + x) * 4 + 3];
-      if (alpha > 36) pixels.push([x, y, alpha / 255]);
-    }
-  }
-
-  if (pixels.length === 0) return createBreathingSphereGeometry(particleCount);
-
-  const positions = new Float32Array(particleCount * 3);
-  const normals = new Float32Array(particleCount * 3);
-  const textAspect = compactLabel.length <= 2 ? 1.25 : compactLabel.length <= 5 ? 2.35 : 3.1;
-  const scaleX = 2.6 / width;
-  const scaleY = (2.6 / textAspect) / height;
-
-  for (let i = 0; i < particleCount; i++) {
-    const pick = Math.floor(
-      seededFract(Math.sin((i + 1) * 91.917) * 47453.5453) * pixels.length,
-    );
-    const [px, py, alpha] = pixels[pick];
-    const jitterX = seededFract(Math.sin((i + 3) * 12.9898) * 43758.5453) - 0.5;
-    const jitterY = seededFract(Math.sin((i + 7) * 78.233) * 43758.5453) - 0.5;
-    const jitterZ = seededFract(Math.sin((i + 11) * 39.425) * 43758.5453) - 0.5;
-    const base = i * 3;
-
-    positions[base] = (px - width / 2 + jitterX * step) * scaleX;
-    positions[base + 1] =
-      (height / 2 - py + jitterY * step) * scaleY + 1.05;
-    positions[base + 2] = jitterZ * (0.08 + alpha * 0.08);
-    normals[base] = 0;
-    normals[base + 1] = 0;
-    normals[base + 2] = 1;
   }
 
   return { positions, normals };
