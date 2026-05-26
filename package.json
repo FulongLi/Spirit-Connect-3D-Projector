@@ -1,23 +1,29 @@
 {
-  "name": "spirit-connect-3d-projector",
-  "version": "0.9.0",
+  "name": "spirit-connect",
+  "version": "1.0.0",
   "private": true,
-  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "legacy": "node server.mjs"
+    "lint": "eslint"
   },
   "dependencies": {
-    "@react-three/fiber": "^9.5.0",
+    "leva": "^0.10.1",
     "next": "16.1.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "three": "^0.182.0"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/three": "^0.182.0",
     "eslint": "^9",
-    "eslint-config-next": "16.1.1"
+    "eslint-config-next": "16.1.1",
+    "tailwindcss": "^4",
+    "typescript": "^5"
   }
 }

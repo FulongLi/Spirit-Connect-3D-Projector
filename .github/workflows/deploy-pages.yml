@@ -19,9 +19,6 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: reference/hologram-particles
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,7 +28,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: reference/hologram-particles/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -48,7 +45,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: reference/hologram-particles/out
+          path: out
 
   deploy:
     environment:

@@ -1,41 +1,22 @@
 "use client";
 
-import { useRef } from "react";
 import { COLORS } from "@/components/shared/theme";
 import styles from "./OverlayButtons.module.css";
 import type { PresetId } from "@/components/hologramParticles/utils/presets";
 
 interface OverlayButtonsProps {
-  showGrid: boolean;
-  onToggleGrid: () => void;
   hideLeva: boolean;
   onToggleLeva: () => void;
-  hasGlb: boolean;
-  onLoadGlb: (file: File) => void;
-  onClearGlb: () => void;
   activePreset: PresetId;
   onTogglePreset: () => void;
 }
 
 export default function OverlayButtons({
-  showGrid,
-  onToggleGrid,
   hideLeva,
   onToggleLeva,
-  hasGlb,
-  onLoadGlb,
-  onClearGlb,
   activePreset,
   onTogglePreset,
 }: OverlayButtonsProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) onLoadGlb(file);
-    e.target.value = "";
-  };
-
   return (
     <div
       className={styles.container}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState } from "react";
 import { Leva } from "leva";
 import { LEVA_THEME } from "@/components/shared/theme";
 import HologramScene from "./HologramScene";
@@ -19,27 +19,12 @@ const MODELS: ModelOption[] = [
 
 export default function PlaygroundCanvas() {
   const [hideLeva, setHideLeva] = useState(true);
-  const [glbUrl, setGlbUrl] = useState<string | null>(null);
   const [activeModelIndex, setActiveModelIndex] = useState(0);
   const [headerVisible, setHeaderVisible] = useState(false);
   const [replayTrigger, setReplayTrigger] = useState(0);
   const [activePreset, setActivePreset] = useState<PresetId>("light");
-  const glbUrlRef = useRef<string | null>(null);
   const activeModel = MODELS[activeModelIndex];
-  const isSphereModel = !glbUrl && activeModel.id === "sphere";
-
-  const handleLoadGlb = useCallback((file: File) => {
-    if (glbUrlRef.current) URL.revokeObjectURL(glbUrlRef.current);
-    const url = URL.createObjectURL(file);
-    glbUrlRef.current = url;
-    setGlbUrl(url);
-  }, []);
-
-  const handleClearGlb = useCallback(() => {
-    if (glbUrlRef.current) URL.revokeObjectURL(glbUrlRef.current);
-    glbUrlRef.current = null;
-    setGlbUrl(null);
-  }, []);
+  const isSphereModel = activeModel.id === "sphere";
 
   const leva = useHologramControls(() => {
     setReplayTrigger((t) => t + 1);
@@ -59,7 +44,7 @@ export default function PlaygroundCanvas() {
       <OverlayHeader visible={headerVisible} />
       <div style={{ position: "fixed", inset: 0 }}>
         <HologramScene
-          url={glbUrl ?? activeModel.url}
+          url={activeModel.url}
           preloadUrls={MODELS.map((m) => m.url)}
           onTransitionComplete={() => setHeaderVisible(true)}
           replayTrigger={replayTrigger}
@@ -74,13 +59,8 @@ export default function PlaygroundCanvas() {
       </div>
 
       <OverlayButtons
-        showGrid={false}
-        onToggleGrid={() => {}}
         hideLeva={hideLeva}
         onToggleLeva={() => setHideLeva((v) => !v)}
-        hasGlb={glbUrl !== null}
-        onLoadGlb={handleLoadGlb}
-        onClearGlb={handleClearGlb}
         activePreset={activePreset}
         onTogglePreset={() =>
           setActivePreset((p) => (p === "light" ? "dark" : "light"))

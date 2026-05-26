@@ -64,7 +64,6 @@ import { chromaticAberration } from "three/addons/tsl/display/ChromaticAberratio
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { MeshSurfaceSampler } from "three/addons/math/MeshSurfaceSampler.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import Stats from "stats.js";
 import type { GeometryData, ParticlesHologramProps } from "./types";
 import { assetPath } from "@/components/shared/assetPath";
 
@@ -292,7 +291,6 @@ export default function ParticlesHologram({
   const springKRef = useRef(springStiffness);
   const springDampingRef = useRef(springDamping);
   const pushStrengthRef = useRef(pushStrength);
-  const mouseScatterRef = useRef(mouseScatter);
   const mouseGlowDecayRef = useRef(mouseGlowDecay);
   const mouseLerpRef = useRef(mouseLerp);
   const bloomNodeRef = useRef<any>(null);
