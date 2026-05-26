@@ -13,6 +13,7 @@ import { PRESETS, type PresetId } from "./utils/presets";
 
 const MODELS: ModelOption[] = [
   { id: "sphere", label: "SPHERE", url: "procedural:sphere" },
+  { id: "terrain", label: "TERRAIN", url: "procedural:terrain" },
   { id: "bd1", label: "BD-1", url: assetPath("/glb/bd1.glb") },
   { id: "bb8", label: "BB-8", url: assetPath("/glb/bb8.glb") },
 ];
@@ -27,6 +28,7 @@ export default function PlaygroundCanvas() {
   const [isCompact, setIsCompact] = useState(false);
   const activeModel = MODELS[activeModelIndex];
   const isSphereModel = activeModel.id === "sphere";
+  const isTerrainModel = activeModel.id === "terrain";
 
   const leva = useHologramControls(() => {
     setReplayTrigger((t) => t + 1);
@@ -68,12 +70,20 @@ export default function PlaygroundCanvas() {
           {...leva}
           {...PRESETS[activePreset]}
           breathAmp={isSphereModel ? 0.065 : 0}
-          floatAmp={isSphereModel ? 0.025 : leva.floatAmp}
-          maskContrast={isSphereModel ? 2.2 : leva.maskContrast}
-          noiseAmp={isSphereModel ? 0.12 : leva.noiseAmp}
-          noiseScale={isSphereModel ? 1.15 : leva.noiseScale}
+          floatAmp={
+            isSphereModel ? 0.025 : isTerrainModel ? 0.006 : leva.floatAmp
+          }
+          maskContrast={
+            isSphereModel ? 2.2 : isTerrainModel ? 1.8 : leva.maskContrast
+          }
+          noiseAmp={
+            isSphereModel ? 0.12 : isTerrainModel ? 0.035 : leva.noiseAmp
+          }
+          noiseScale={
+            isSphereModel ? 1.15 : isTerrainModel ? 0.85 : leva.noiseScale
+          }
           particleCount={isCompact ? Math.min(leva.particleCount, 36000) : leva.particleCount}
-          modelY={isCompact ? -0.72 : leva.modelY}
+          modelY={isTerrainModel ? (isCompact ? -0.92 : -1.05) : isCompact ? -0.72 : leva.modelY}
           mouseRadius={isCompact ? Math.max(leva.mouseRadius, 2.35) : leva.mouseRadius}
           mouseStrength={isCompact ? Math.max(leva.mouseStrength, 4.4) : leva.mouseStrength}
           pushStrength={isCompact ? Math.max(leva.pushStrength, 2.8) : leva.pushStrength}

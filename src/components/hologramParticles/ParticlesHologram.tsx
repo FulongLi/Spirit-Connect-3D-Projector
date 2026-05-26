@@ -72,6 +72,7 @@ import { assetPath } from "@/components/shared/assetPath";
 const geometryCache = new Map<string, GeometryData>();
 const geometryInflight = new Map<string, Promise<GeometryData>>();
 const PROCEDURAL_SPHERE_URL = "procedural:sphere";
+const PROCEDURAL_TERRAIN_URL = "procedural:terrain";
 
 function cacheKey(url: string, particleCount: number) {
   return `${url}:${particleCount}`;
@@ -86,6 +87,13 @@ async function sampleGLBGeometry(
   }
 
   const key = cacheKey(url, particleCount);
+  if (url === PROCEDURAL_TERRAIN_URL) {
+    if (geometryCache.has(key)) return geometryCache.get(key)!;
+    const data = createTerrainGeometry(particleCount);
+    geometryCache.set(key, data);
+    return data;
+  }
+
   if (geometryCache.has(key)) return geometryCache.get(key)!;
   if (geometryInflight.has(key)) return geometryInflight.get(key)!;
 
@@ -181,6 +189,71 @@ function createBreathingSphereGeometry(particleCount: number): GeometryData {
   }
 
   return { positions, normals };
+}
+
+function createTerrainGeometry(particleCount: number): GeometryData {
+  const positions = new Float32Array(particleCount * 3);
+  const normals = new Float32Array(particleCount * 3);
+  const width = 3.8;
+  const depth = 2.45;
+  const eps = 0.012;
+
+  for (let i = 0; i < particleCount; i++) {
+    const u = seededFract(i * 0.754877666 + 0.137);
+    const v = seededFract(i * 0.569840296 + 0.421);
+    const jitterX = seededFract(Math.sin((i + 5) * 12.9898) * 43758.5453) - 0.5;
+    const jitterZ = seededFract(Math.sin((i + 9) * 78.233) * 43758.5453) - 0.5;
+    const x = (u - 0.5) * width + jitterX * 0.012;
+    const z = (v - 0.5) * depth + jitterZ * 0.012;
+    const y = terrainHeight(x, z) + 0.72;
+    const base = i * 3;
+
+    positions[base] = x;
+    positions[base + 1] = y;
+    positions[base + 2] = z;
+
+    const hL = terrainHeight(x - eps, z);
+    const hR = terrainHeight(x + eps, z);
+    const hD = terrainHeight(x, z - eps);
+    const hU = terrainHeight(x, z + eps);
+    const normal = new Vector3(hL - hR, eps * 2, hD - hU).normalize();
+    normals[base] = normal.x;
+    normals[base + 1] = normal.y;
+    normals[base + 2] = normal.z;
+  }
+
+  return { positions, normals };
+}
+
+function terrainHeight(x: number, z: number) {
+  const gaussian = (
+    cx: number,
+    cz: number,
+    sx: number,
+    sz: number,
+    amp: number,
+  ) => {
+    const dx = (x - cx) / sx;
+    const dz = (z - cz) / sz;
+    return Math.exp(-(dx * dx + dz * dz)) * amp;
+  };
+
+  const mountains =
+    gaussian(-0.95, -0.18, 0.48, 0.38, 0.78) +
+    gaussian(0.95, 0.38, 0.62, 0.42, 0.58) +
+    gaussian(0.12, -0.78, 0.5, 0.28, 0.34);
+  const basins =
+    gaussian(0.02, 0.08, 0.72, 0.44, -0.42) +
+    gaussian(1.32, -0.48, 0.38, 0.3, -0.26);
+  const ridges =
+    Math.sin(x * 3.1 + z * 1.7) * 0.07 +
+    Math.sin((x - z) * 5.2) * 0.035 +
+    Math.sin((x * 1.8 + z * 6.1)) * 0.025;
+  const edgeX = Math.abs(x) / 1.9;
+  const edgeZ = Math.abs(z) / 1.225;
+  const edgeDrop = Math.pow(Math.max(edgeX, edgeZ), 3.2) * 0.34;
+
+  return mountains + basins + ridges - edgeDrop;
 }
 
 function seededFract(value: number) {
