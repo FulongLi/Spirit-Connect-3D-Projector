@@ -74,9 +74,9 @@ export default function PlaygroundCanvas() {
           noiseScale={isSphereModel ? 1.15 : leva.noiseScale}
           particleCount={isCompact ? Math.min(leva.particleCount, 36000) : leva.particleCount}
           modelY={isCompact ? -0.72 : leva.modelY}
-          mouseRadius={isCompact ? Math.max(leva.mouseRadius, 3.2) : leva.mouseRadius}
-          mouseStrength={isCompact ? Math.max(leva.mouseStrength, 5.6) : leva.mouseStrength}
-          pushStrength={isCompact ? Math.max(leva.pushStrength, 4.8) : leva.pushStrength}
+          mouseRadius={isCompact ? Math.max(leva.mouseRadius, 2.35) : leva.mouseRadius}
+          mouseStrength={isCompact ? Math.max(leva.mouseStrength, 4.4) : leva.mouseStrength}
+          pushStrength={isCompact ? Math.max(leva.pushStrength, 2.8) : leva.pushStrength}
         />
       </div>
 

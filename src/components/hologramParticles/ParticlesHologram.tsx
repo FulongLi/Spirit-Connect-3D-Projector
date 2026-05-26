@@ -981,8 +981,8 @@ export default function ParticlesHologram({
       let lastFrameTime = performance.now();
       let mouseMoving = false;
       let activePointerId: number | null = null;
-      let touchScatter = 0;
-      let targetTouchScatter = 0;
+      let touchInfluence = 0;
+      let targetTouchInfluence = 0;
       const CAM_RADIUS = camera.position.z;
       let camX = 0, camY = 0, camRoll = 0;
       let camVelX = 0, camVelY = 0, camVelRoll = 0;
@@ -1018,21 +1018,22 @@ export default function ParticlesHologram({
         if (e.cancelable) e.preventDefault();
         activePointerId = e.pointerId;
         container.setPointerCapture?.(e.pointerId);
-        targetTouchScatter = e.pointerType === "touch" ? 1 : 0;
+        targetTouchInfluence = e.pointerType === "touch" ? 1 : 0;
         updatePointerPosition(e.clientX, e.clientY);
       };
 
       const onPointerMove = (e: PointerEvent) => {
         if (activePointerId !== null && e.pointerId !== activePointerId) return;
         if (e.cancelable) e.preventDefault();
-        targetTouchScatter = e.pointerType === "touch" ? 1 : targetTouchScatter;
+        targetTouchInfluence =
+          e.pointerType === "touch" ? 1 : targetTouchInfluence;
         updatePointerPosition(e.clientX, e.clientY);
       };
 
       const endPointer = (e: PointerEvent) => {
         if (activePointerId !== null && e.pointerId !== activePointerId) return;
         mouseMoving = false;
-        targetTouchScatter = 0;
+        targetTouchInfluence = 0;
         if (activePointerId !== null) {
           container.releasePointerCapture?.(activePointerId);
         }
@@ -1059,9 +1060,12 @@ export default function ParticlesHologram({
 
         moveTimer += delta;
         if (moveTimer > MOVE_TIMEOUT) mouseMoving = false;
-        touchScatter +=
-          (targetTouchScatter - touchScatter) *
-          (1 - Math.exp(-(targetTouchScatter > touchScatter ? 14 : 4) * delta));
+        touchInfluence +=
+          (targetTouchInfluence - touchInfluence) *
+          (1 -
+            Math.exp(
+              -(targetTouchInfluence > touchInfluence ? 8 : 5.5) * delta,
+            ));
 
         // ── Transition state machine ──────────────────────────────────────────
         const tState = transitionStateRef.current;
@@ -1171,7 +1175,7 @@ export default function ParticlesHologram({
 
         if (mouseMoving) {
           const push = pushStrengthRef.current;
-          const touchPush = 1 + touchScatter * 1.35;
+          const touchPush = 1 + touchInfluence * 0.32;
           impVel.x += smoothVel.x * push * touchPush * delta;
           impVel.y += smoothVel.y * push * touchPush * delta;
           impVel.z += smoothVel.z * push * touchPush * delta;
@@ -1180,12 +1184,14 @@ export default function ParticlesHologram({
         impulse.x += impVel.x * delta;
         impulse.y += impVel.y * delta;
         impulse.z += impVel.z * delta;
-        impulse.clampLength(0, 3.5 + touchScatter * 2.1);
+        impulse.clampLength(0, 3.5 + touchInfluence * 0.55);
 
-        u.mouseRadius.value = mouseRadiusRef.current * (1 + touchScatter * 1.55);
+        u.mouseRadius.value =
+          mouseRadiusRef.current * (1 + touchInfluence * 0.18);
         u.mouseStrength.value =
-          mouseStrengthRef.current * (1 + touchScatter * 0.55);
-        u.mouseScatter.value = mouseScatterRef.current + touchScatter * 1.25;
+          mouseStrengthRef.current * (1 + touchInfluence * 0.08);
+        u.mouseScatter.value =
+          mouseScatterRef.current + touchInfluence * 0.16;
         u.mouseVel.value.copy(impulse);
         prevMousePos.copy(smoothMousePos);
 
