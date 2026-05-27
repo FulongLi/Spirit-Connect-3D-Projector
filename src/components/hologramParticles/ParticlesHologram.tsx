@@ -444,6 +444,7 @@ export default function ParticlesHologram({
   const controlsRef = useRef<OrbitControls | null>(null);
   const groupRef = useRef<Group | null>(null);
   const autoRotateSpeedRef = useRef(autoRotateSpeed);
+  const colorRef = useRef(color);
   const uniformsRef = useRef<Record<string, any> | null>(null);
   const springKRef = useRef(springStiffness);
   const springDampingRef = useRef(springDamping);
@@ -525,6 +526,7 @@ export default function ParticlesHologram({
 
   // ── Ref sync — runs every render, read by the animate loop ───────────────────
   autoRotateSpeedRef.current     = autoRotateSpeed;
+  colorRef.current               = color;
   springKRef.current             = springStiffness;
   springDampingRef.current       = springDamping;
   pushStrengthRef.current        = pushStrength;
@@ -1133,6 +1135,8 @@ export default function ParticlesHologram({
       const smoothVel = new Vector3();
       const impVel = new Vector3();
       const impulse = new Vector3();
+      const currentModelColor = new Color(color);
+      const targetModelColor = new Color(color);
       let glowEnergy = 0;
       let lastFrameTime = performance.now();
       let mouseMoving = false;
@@ -1432,6 +1436,10 @@ export default function ParticlesHologram({
         glowEnergy *= Math.exp(-mouseGlowDecayRef.current * delta);
         u.mouseGlowEnergy.value = glowEnergy;
 
+        targetModelColor.set(colorRef.current);
+        currentModelColor.lerp(targetModelColor, 1 - Math.exp(-2.6 * delta));
+        u.color.value.copy(currentModelColor);
+
         // ── Camera parallax ───────────────────────────────────────────────────
         {
           const intensity = camIntensityRef.current;
@@ -1592,7 +1600,6 @@ export default function ParticlesHologram({
 
     const u = uniformsRef.current;
     if (u) {
-      u.color.value.set(color);
       u.floatAmp.value = floatAmp;
       u.breathAmp.value = breathAmp;
       u.sphereSize.value = sphereSize;
