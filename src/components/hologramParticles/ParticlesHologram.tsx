@@ -1135,8 +1135,6 @@ export default function ParticlesHologram({
       const smoothVel = new Vector3();
       const impVel = new Vector3();
       const impulse = new Vector3();
-      const currentModelColor = new Color(color);
-      const targetModelColor = new Color(color);
       let glowEnergy = 0;
       let lastFrameTime = performance.now();
       let mouseMoving = false;
@@ -1355,6 +1353,7 @@ export default function ParticlesHologram({
           if (p >= 1) {
             u.maskContrast.value = maskContrastRef.current;
             transitionStateRef.current = "idle";
+            u.color.value.set(colorRef.current);
             if (isEntranceRef.current) {
               isEntranceRef.current = false;
             }
@@ -1435,10 +1434,6 @@ export default function ParticlesHologram({
         if (currentImpulse > glowEnergy) glowEnergy = currentImpulse;
         glowEnergy *= Math.exp(-mouseGlowDecayRef.current * delta);
         u.mouseGlowEnergy.value = glowEnergy;
-
-        targetModelColor.set(colorRef.current);
-        currentModelColor.lerp(targetModelColor, 1 - Math.exp(-2.6 * delta));
-        u.color.value.copy(currentModelColor);
 
         // ── Camera parallax ───────────────────────────────────────────────────
         {
@@ -1600,6 +1595,7 @@ export default function ParticlesHologram({
 
     const u = uniformsRef.current;
     if (u) {
+      if (transitionStateRef.current === "idle") u.color.value.set(color);
       u.floatAmp.value = floatAmp;
       u.breathAmp.value = breathAmp;
       u.sphereSize.value = sphereSize;
