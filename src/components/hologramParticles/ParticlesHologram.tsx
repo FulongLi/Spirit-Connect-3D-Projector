@@ -509,6 +509,8 @@ export default function ParticlesHologram({
   const transitionReformDurRef = useRef(transitionReformDur);
   const transitionMaskContrastRef = useRef(transitionMaskContrast);
   const transitionGlowScaleRef = useRef(transitionGlowScale);
+  const transitionColorStartRef = useRef<Color | null>(null);
+  const transitionColorTargetRef = useRef<Color | null>(null);
   const entranceMorphDurRef = useRef(entranceMorphDur);
   const entranceReformDurRef = useRef(entranceReformDur);
 
@@ -1324,7 +1326,16 @@ export default function ParticlesHologram({
             ? entranceMorphDurRef.current
             : transitionMorphDurRef.current;
           const p = Math.min(transitionTimeRef.current / morphDur, 1);
-          u.transitionProgress.value = smoothstep(p);
+          const morphProgress = smoothstep(p);
+          u.transitionProgress.value = morphProgress;
+          const colorStart = transitionColorStartRef.current;
+          const colorTarget = transitionColorTargetRef.current;
+          if (!isEntranceRef.current && colorStart && colorTarget) {
+            const colorProgress = smoothstep(
+              Math.min(Math.max((morphProgress - 0.35) / 0.65, 0), 1),
+            );
+            u.color.value.copy(colorStart).lerp(colorTarget, colorProgress);
+          }
           if (p >= 1) {
             const srcPos = posAttrRef.current!.array as Float32Array;
             const tgtPos = posAttrTargetRef.current!.array as Float32Array;
@@ -1337,6 +1348,9 @@ export default function ParticlesHologram({
             u.transitionProgress.value = 0;
             transitionTimeRef.current = 0;
             transitionStateRef.current = "deform-in";
+            if (!isEntranceRef.current && transitionColorTargetRef.current) {
+              u.color.value.copy(transitionColorTargetRef.current);
+            }
           }
         } else if (tState === "deform-in") {
           transitionTimeRef.current += delta;
@@ -1567,8 +1581,13 @@ export default function ParticlesHologram({
         transitionTimeRef.current = 0;
 
         if (wasIdle) {
+          transitionColorStartRef.current = uniformsRef.current.color.value.clone();
+          transitionColorTargetRef.current = new Color(colorRef.current);
           transitionStateRef.current = "deform-out";
         } else {
+          const currentColor = uniformsRef.current.color.value.clone();
+          transitionColorStartRef.current = currentColor;
+          transitionColorTargetRef.current = new Color(colorRef.current);
           uniformsRef.current.maskContrast.value =
             transitionMaskContrastRef.current;
           transitionStateRef.current = "morphing";
