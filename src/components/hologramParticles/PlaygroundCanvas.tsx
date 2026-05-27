@@ -13,6 +13,7 @@ import { PRESETS, type PresetId } from "./utils/presets";
 
 const MODELS: ModelOption[] = [
   { id: "sphere", label: "SPHERE", url: "procedural:sphere" },
+  { id: "logo", label: "LOGO", url: "procedural:spirit-logo" },
   { id: "terrain", label: "TERRAIN", url: "procedural:terrain" },
   { id: "bd1", label: "BD-1", url: assetPath("/glb/bd1.glb") },
   { id: "bb8", label: "BB-8", url: assetPath("/glb/bb8.glb") },
@@ -28,6 +29,7 @@ export default function PlaygroundCanvas() {
   const [isCompact, setIsCompact] = useState(false);
   const activeModel = MODELS[activeModelIndex];
   const isSphereModel = activeModel.id === "sphere";
+  const isLogoModel = activeModel.id === "logo";
   const isTerrainModel = activeModel.id === "terrain";
 
   const leva = useHologramControls(() => {
@@ -69,21 +71,58 @@ export default function PlaygroundCanvas() {
           replayTrigger={replayTrigger}
           {...leva}
           {...PRESETS[activePreset]}
+          color={isLogoModel ? "#32b8f2" : PRESETS[activePreset].color}
           breathAmp={isSphereModel ? 0.065 : 0}
           floatAmp={
-            isSphereModel ? 0.025 : isTerrainModel ? 0.006 : leva.floatAmp
+            isSphereModel
+              ? 0.025
+              : isTerrainModel
+                ? 0.006
+                : isLogoModel
+                  ? 0.008
+                  : leva.floatAmp
           }
           maskContrast={
-            isSphereModel ? 2.2 : isTerrainModel ? 1.8 : leva.maskContrast
+            isSphereModel
+              ? 2.2
+              : isTerrainModel
+                ? 1.8
+                : isLogoModel
+                  ? 2.3
+                  : leva.maskContrast
           }
           noiseAmp={
-            isSphereModel ? 0.12 : isTerrainModel ? 0.035 : leva.noiseAmp
+            isSphereModel
+              ? 0.12
+              : isTerrainModel
+                ? 0.035
+                : isLogoModel
+                  ? 0.018
+                  : leva.noiseAmp
           }
           noiseScale={
-            isSphereModel ? 1.15 : isTerrainModel ? 0.85 : leva.noiseScale
+            isSphereModel
+              ? 1.15
+              : isTerrainModel
+                ? 0.85
+                : isLogoModel
+                  ? 0.95
+                  : leva.noiseScale
           }
           particleCount={isCompact ? Math.min(leva.particleCount, 36000) : leva.particleCount}
-          modelY={isTerrainModel ? (isCompact ? -0.92 : -1.05) : isCompact ? -0.72 : leva.modelY}
+          modelY={
+            isTerrainModel
+              ? isCompact
+                ? -0.92
+                : -1.05
+              : isLogoModel
+                ? isCompact
+                  ? -0.78
+                  : -0.9
+                : isCompact
+                  ? -0.72
+                  : leva.modelY
+          }
           mouseRadius={isCompact ? Math.max(leva.mouseRadius, 2.35) : leva.mouseRadius}
           mouseStrength={isCompact ? Math.max(leva.mouseStrength, 4.4) : leva.mouseStrength}
           pushStrength={isCompact ? Math.max(leva.pushStrength, 2.8) : leva.pushStrength}
