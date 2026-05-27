@@ -1054,6 +1054,11 @@ export default function ParticlesHologram({
       let lastFrameTime = performance.now();
       let mouseMoving = false;
       let activePointerId: number | null = null;
+      let modelScale = 1;
+      let targetModelScale = 1;
+      let pinchStartDistance = 0;
+      let pinchStartScale = 1;
+      const pointerPositions = new Map<number, { x: number; y: number; type: string }>();
       let touchInfluence = 0;
       let targetTouchInfluence = 0;
       const CAM_RADIUS = camera.position.z;
@@ -1063,6 +1068,14 @@ export default function ParticlesHologram({
       const MOVE_TIMEOUT = 0.06;
       let mouseEverMoved = false;
       const smoothstep = (p: number) => p * p * (3 - 2 * p);
+      const clampScale = (scale: number) => Math.min(Math.max(scale, 0.55), 1.9);
+      const touchPointers = () =>
+        [...pointerPositions.values()].filter((pointer) => pointer.type === "touch");
+      const touchDistance = () => {
+        const touches = touchPointers();
+        if (touches.length < 2) return 0;
+        return Math.hypot(touches[0].x - touches[1].x, touches[0].y - touches[1].y);
+      };
 
       const updatePointerPosition = (clientX: number, clientY: number) => {
         const rect = container.getBoundingClientRect();
@@ -1075,6 +1088,7 @@ export default function ParticlesHologram({
           const localPos = mouseHit
             .clone()
             .sub(posGroup.position)
+            .divideScalar(Math.max(modelScale, 0.001))
             .applyQuaternion(rotGroup.quaternion.clone().invert());
           targetMousePos.copy(localPos);
           if (!mouseEverMoved) {
@@ -1087,36 +1101,93 @@ export default function ParticlesHologram({
         moveTimer = 0;
       };
 
+      const onWheel = (e: WheelEvent) => {
+        if (e.cancelable) e.preventDefault();
+        const factor = Math.exp(-e.deltaY * 0.0012);
+        targetModelScale = clampScale(targetModelScale * factor);
+      };
+
       const onPointerDown = (e: PointerEvent) => {
         if (e.cancelable) e.preventDefault();
+        pointerPositions.set(e.pointerId, {
+          x: e.clientX,
+          y: e.clientY,
+          type: e.pointerType,
+        });
         activePointerId = e.pointerId;
         container.setPointerCapture?.(e.pointerId);
+        const touches = touchPointers();
+        if (touches.length >= 2) {
+          mouseMoving = false;
+          targetTouchInfluence = 0;
+          pinchStartDistance = touchDistance();
+          pinchStartScale = targetModelScale;
+          return;
+        }
         targetTouchInfluence = e.pointerType === "touch" ? 1 : 0;
         updatePointerPosition(e.clientX, e.clientY);
       };
 
       const onPointerMove = (e: PointerEvent) => {
-        if (activePointerId !== null && e.pointerId !== activePointerId) return;
+        if (
+          activePointerId !== null &&
+          e.pointerId !== activePointerId &&
+          !pointerPositions.has(e.pointerId)
+        )
+          return;
         if (e.cancelable) e.preventDefault();
+        pointerPositions.set(e.pointerId, {
+          x: e.clientX,
+          y: e.clientY,
+          type: e.pointerType,
+        });
+        const touches = touchPointers();
+        if (touches.length >= 2) {
+          const distance = touchDistance();
+          if (pinchStartDistance > 0 && distance > 0) {
+            targetModelScale = clampScale(
+              pinchStartScale * (distance / pinchStartDistance),
+            );
+          }
+          mouseMoving = false;
+          targetTouchInfluence = 0;
+          return;
+        }
         targetTouchInfluence =
           e.pointerType === "touch" ? 1 : targetTouchInfluence;
         updatePointerPosition(e.clientX, e.clientY);
       };
 
       const endPointer = (e: PointerEvent) => {
-        if (activePointerId !== null && e.pointerId !== activePointerId) return;
+        if (
+          activePointerId !== null &&
+          e.pointerId !== activePointerId &&
+          !pointerPositions.has(e.pointerId)
+        )
+          return;
+        pointerPositions.delete(e.pointerId);
         mouseMoving = false;
         targetTouchInfluence = 0;
-        if (activePointerId !== null) {
-          container.releasePointerCapture?.(activePointerId);
+        if (container.hasPointerCapture?.(e.pointerId)) {
+          container.releasePointerCapture(e.pointerId);
         }
-        activePointerId = null;
+        const remainingTouches = touchPointers();
+        if (remainingTouches.length >= 2) {
+          pinchStartDistance = touchDistance();
+          pinchStartScale = targetModelScale;
+        } else if (pointerPositions.size > 0) {
+          activePointerId = [...pointerPositions.keys()][0];
+        } else {
+          activePointerId = null;
+          pinchStartDistance = 0;
+        }
       };
 
       const cancelPointer = (e: PointerEvent) => {
         endPointer(e);
       };
 
+      container.addEventListener("wheel", onWheel, { passive: false });
       container.addEventListener("pointerdown", onPointerDown, { passive: false });
       container.addEventListener("pointermove", onPointerMove, { passive: false });
       container.addEventListener("pointerup", endPointer);
@@ -1133,6 +1204,10 @@ export default function ParticlesHologram({
 
         moveTimer += delta;
         if (moveTimer > MOVE_TIMEOUT) mouseMoving = false;
+        modelScale +=
+          (targetModelScale - modelScale) *
+          (1 - Math.exp(-10 * delta));
+        posGroup.scale.setScalar(modelScale);
         touchInfluence +=
           (targetTouchInfluence - touchInfluence) *
           (1 -
@@ -1306,6 +1381,7 @@ export default function ParticlesHologram({
 
       cleanupInner = () => {
         window.removeEventListener("resize", onResize);
+        container.removeEventListener("wheel", onWheel);
         container.removeEventListener("pointerdown", onPointerDown);
         container.removeEventListener("pointermove", onPointerMove);
         container.removeEventListener("pointerup", endPointer);
