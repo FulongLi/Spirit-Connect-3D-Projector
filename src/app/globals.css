@@ -1,12 +1,18 @@
 @import "tailwindcss";
 
 @theme inline {
-  --font-bebas: var(--font-bebas);
-  --font-barlow: var(--font-barlow);
-  --font-ibm-mono: var(--font-ibm-mono);
+  --font-bebas: var(--font-display);
+  --font-barlow: var(--font-body);
+  --font-ibm-mono: var(--font-mono);
 }
 
 :root {
+  --font-display: Impact, "Arial Narrow", sans-serif;
+  --font-body: "Arial Narrow", "Roboto Condensed", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  --font-bebas: var(--font-display);
+  --font-barlow: var(--font-body);
+  --font-ibm-mono: var(--font-mono);
   --color-bg: #1a1816;
   --color-bg-light: #242220;
   --color-surface: #2a2826;

@@ -70,6 +70,10 @@ Public site:
 
 [https://fulongli.github.io/Spirit-Connect-3D-Projector/](https://fulongli.github.io/Spirit-Connect-3D-Projector/)
 
+If the public link opens this README instead of the 3D interface, GitHub Pages is
+still serving the repository branch directly. In `Settings -> Pages`, set
+`Source` to `GitHub Actions`, then rerun the deploy workflow.
+
 ## Project Structure
 
 ```text

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { bebasNeue, barlowCondensed, ibmPlexMono } from "@/components/shared/fonts";
 import "./globals.css";
 import Footer from "@/components/overlay/components/Footer/Footer";
 
@@ -17,9 +16,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${bebasNeue.variable} ${barlowCondensed.variable} ${ibmPlexMono.variable} antialiased`}
-      >
+      <body>
         {children}
         <Footer />
       </body>
