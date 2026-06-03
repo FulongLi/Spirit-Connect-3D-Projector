@@ -2,7 +2,7 @@
 
 .root {
   position: fixed;
-  bottom: 100px;
+  bottom: 205px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 20;
@@ -173,7 +173,7 @@
 
 @media (max-width: 720px) {
   .root {
-    bottom: 82px;
+    bottom: 216px;
     gap: 8px;
     width: min(100vw - 28px, 330px);
     justify-content: center;
